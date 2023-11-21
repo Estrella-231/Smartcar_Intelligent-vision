@@ -75,7 +75,17 @@ static soft_spi_info_struct             ips114_spi;
 // 使用示例     ips114_write_8bit_data(dat);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips114_write_8bit_data(data)    (soft_spi_write_8bit(&ips114_spi, (data)))
+#define ips114_write_8bit_data(data)                (soft_spi_write_8bit(&ips114_spi, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS114 SPI 写 8bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips114_write_8bit_data_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips114_write_8bit_data_array(data, len)     (soft_spi_write_8bit(&ips114_spi, (data), (len)))
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS114 SPI 写 16bit 数据
@@ -84,7 +94,17 @@ static soft_spi_info_struct             ips114_spi;
 // 使用示例     ips114_write_16bit_data(x1 + 52);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips114_write_16bit_data(data)   (soft_spi_write_16bit(&ips114_spi, (data)))
+#define ips114_write_16bit_data(data)               (soft_spi_write_16bit(&ips114_spi, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS114 SPI 写 16bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips114_write_16bit_data_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips114_write_16bit_data_array(data, len)    (soft_spi_write_16bit_array(&ips114_spi, (data), (len)))
 #else
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS114 SPI 写 8bit 数据
@@ -93,7 +113,17 @@ static soft_spi_info_struct             ips114_spi;
 // 使用示例     ips114_write_8bit_data(dat);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips114_write_8bit_data(data)    (spi_write_8bit(IPS114_SPI, (data)))
+#define ips114_write_8bit_data(data)                (spi_write_8bit(IPS114_SPI, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS114 SPI 写 8bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips114_write_8bit_data_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips114_write_8bit_data_array(data, len)     (spi_write_8bit_array(IPS114_SPI, (data), (len)))
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS114 SPI 写 16bit 数据
@@ -102,7 +132,17 @@ static soft_spi_info_struct             ips114_spi;
 // 使用示例     ips114_write_16bit_data(x1 + 52);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips114_write_16bit_data(data)   (spi_write_16bit(IPS114_SPI, (data)))
+#define ips114_write_16bit_data(data)               (spi_write_16bit(IPS114_SPI, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS114 SPI 写 16bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips114_write_16bit_data_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips114_write_16bit_data_array(data, len)    (spi_write_16bit_array(IPS114_SPI, (data), (len)))
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -144,24 +184,14 @@ static void ips114_set_region (const uint16 x1, const uint16 y1, const uint16 x2
         case IPS114_PORTAIT:
         {
             ips114_write_index(0x2a);                                           // 列地址设置
-            ips114_write_16bit_data(x1 + 52);
-            ips114_write_16bit_data(x2 + 52);
+            ips114_write_16bit_data(x1 + 40);
+            ips114_write_16bit_data(x2 + 40);
             ips114_write_index(0x2b);                                           // 行地址设置
-            ips114_write_16bit_data(y1 + 40);
-            ips114_write_16bit_data(y2 + 40);
+            ips114_write_16bit_data(y1 + 52);
+            ips114_write_16bit_data(y2 + 52);
             ips114_write_index(0x2c);                                           // 储存器写
         }break;
         case IPS114_PORTAIT_180:
-        {
-            ips114_write_index(0x2a);                                           // 列地址设置
-            ips114_write_16bit_data(x1 + 53);
-            ips114_write_16bit_data(x2 + 53);
-            ips114_write_index(0x2b);                                           // 行地址设置
-            ips114_write_16bit_data(y1 + 40);
-            ips114_write_16bit_data(y2 + 40);
-            ips114_write_index(0x2c);                                           // 储存器写
-        }break;
-        case IPS114_CROSSWISE:
         {
             ips114_write_index(0x2a);                                           // 列地址设置
             ips114_write_16bit_data(x1 + 40);
@@ -171,14 +201,24 @@ static void ips114_set_region (const uint16 x1, const uint16 y1, const uint16 x2
             ips114_write_16bit_data(y2 + 53);
             ips114_write_index(0x2c);                                           // 储存器写
         }break;
+        case IPS114_CROSSWISE:
+        {
+            ips114_write_index(0x2a);                                           // 列地址设置
+            ips114_write_16bit_data(x1 + 52);
+            ips114_write_16bit_data(x2 + 52);
+            ips114_write_index(0x2b);                                           // 行地址设置
+            ips114_write_16bit_data(y1 + 40);
+            ips114_write_16bit_data(y2 + 40);
+            ips114_write_index(0x2c);                                           // 储存器写
+        }break;
         case IPS114_CROSSWISE_180:
         {
             ips114_write_index(0x2a);                                           // 列地址设置
-            ips114_write_16bit_data(x1 + 40);
-            ips114_write_16bit_data(x2 + 40);
+            ips114_write_16bit_data(x1 + 53);
+            ips114_write_16bit_data(x2 + 53);
             ips114_write_index(0x2b);                                           // 行地址设置
-            ips114_write_16bit_data(y1 + 52);
-            ips114_write_16bit_data(y2 + 52);
+            ips114_write_16bit_data(y1 + 40);
+            ips114_write_16bit_data(y2 + 40);
             ips114_write_index(0x2c);                                           // 储存器写
         }break;
     }
@@ -232,13 +272,18 @@ static void ips114_debug_init (void)
 //-------------------------------------------------------------------------------------------------------------------
 void ips114_clear (void)
 {
-    uint32 i = ips114_x_max * ips114_y_max;
+    uint16 color_buffer[ips114_x_max];
+    uint32 i = 0, j = 0;
 
     IPS114_CS(0);
     ips114_set_region(0, 0, ips114_x_max - 1, ips114_y_max - 1);
-    for( ; 0 < i; i --)
+    for(i = 0; i < ips114_x_max; i ++)
     {
-        ips114_write_16bit_data(ips114_bgcolor);
+        color_buffer[i] = ips114_bgcolor;
+    }
+    for (j = 0; j < ips114_y_max; j ++)
+    {
+        ips114_write_16bit_data_array(color_buffer, ips114_x_max);
     }
     IPS114_CS(1);
 }
@@ -252,13 +297,18 @@ void ips114_clear (void)
 //-------------------------------------------------------------------------------------------------------------------
 void ips114_full (const uint16 color)
 {
-    uint32 i = ips114_x_max * ips114_y_max;
+    uint16 color_buffer[ips114_x_max];
+    uint32 i = 0, j = 0;
 
     IPS114_CS(0);
     ips114_set_region(0, 0, ips114_x_max - 1, ips114_y_max - 1);
-    for( ; 0 < i; i --)
+    for(i = 0; i < ips114_x_max; i ++)
     {
-        ips114_write_16bit_data(color);
+        color_buffer[i] = color;
+    }
+    for (j = 0; j < ips114_y_max; j ++)
+    {
+        ips114_write_16bit_data_array(color_buffer, ips114_x_max);
     }
     IPS114_CS(1);
 }
@@ -278,14 +328,14 @@ void ips114_set_dir (ips114_dir_enum dir)
         case IPS114_PORTAIT:
         case IPS114_PORTAIT_180:
         {
-            ips114_x_max = 135;
-            ips114_y_max = 240;
+            ips114_x_max = 240;
+            ips114_y_max = 135;
         }break;
         case IPS114_CROSSWISE:
         case IPS114_CROSSWISE_180:
         {
-            ips114_x_max = 240;
-            ips114_y_max = 135;
+            ips114_x_max = 135;
+            ips114_y_max = 240;
         }break;
     }
 }
@@ -377,6 +427,7 @@ void ips114_draw_line (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_en
                 ips114_draw_point(x_start, y_start, color);
                 y_start += y_dir;
             }
+            ips114_draw_point(x_start, y_start, color);
             break;
         }
         if(func_abs(y_start - y_end) > func_abs(x_start - x_end))
@@ -387,6 +438,7 @@ void ips114_draw_line (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_en
                 y_start += y_dir;
                 x_start = (int16)(((float)y_start - temp_b) / temp_rate);
             }
+            ips114_draw_point(x_start, y_start, color);
         }
         else
         {
@@ -396,6 +448,7 @@ void ips114_draw_line (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_en
                 x_start += x_dir;
                 y_start = (int16)((float)x_start * temp_rate + temp_b);
             }
+            ips114_draw_point(x_start, y_start, color);
         }
     }while(0);
 }
@@ -423,42 +476,44 @@ void ips114_show_char (uint16 x, uint16 y, const char dat)
     {
         case IPS114_6X8_FONT:
         {
+            uint16 display_buffer[6*8];
+            ips114_set_region(x, y, x + 5, y + 7);
             for(i = 0; 6 > i; i ++)
             {
-                ips114_set_region(x + i, y, x + i, y + 8);
                 // 减 32 因为是取模是从空格开始取得 空格在 ascii 中序号是 32
                 uint8 temp_top = ascii_font_6x8[dat - 32][i];
                 for(j = 0; 8 > j; j ++)
                 {
                     if(temp_top & 0x01)
                     {
-                        ips114_write_16bit_data(ips114_pencolor);
+                        display_buffer[i + j * 6] = (ips114_pencolor);
                     }
                     else
                     {
-                        ips114_write_16bit_data(ips114_bgcolor);
+                        display_buffer[i + j * 6] = (ips114_bgcolor);
                     }
                     temp_top >>= 1;
                 }
             }
+            ips114_write_16bit_data_array(display_buffer, 6*8);
         }break;
         case IPS114_8X16_FONT:
         {
+            uint16 display_buffer[8*16];
+            ips114_set_region(x, y, x + 7, y + 15);
             for(i = 0; 8 > i; i ++)
             {
-                ips114_set_region(x + i, y, x + i, y + 15);
-                // 减 32 因为是取模是从空格开始取得 空格在 ascii 中序号是 32
                 uint8 temp_top = ascii_font_8x16[dat - 32][i];
                 uint8 temp_bottom = ascii_font_8x16[dat - 32][i + 8];
                 for(j = 0; 8 > j; j ++)
                 {
                     if(temp_top & 0x01)
                     {
-                        ips114_write_16bit_data(ips114_pencolor);
+                        display_buffer[i + j * 8] = (ips114_pencolor);
                     }
                     else
                     {
-                        ips114_write_16bit_data(ips114_bgcolor);
+                        display_buffer[i + j * 8] = (ips114_bgcolor);
                     }
                     temp_top >>= 1;
                 }
@@ -466,15 +521,16 @@ void ips114_show_char (uint16 x, uint16 y, const char dat)
                 {
                     if(temp_bottom & 0x01)
                     {
-                        ips114_write_16bit_data(ips114_pencolor);
+                        display_buffer[i + j * 8 + 4 * 16] = (ips114_pencolor);
                     }
                     else
                     {
-                        ips114_write_16bit_data(ips114_bgcolor);
+                        display_buffer[i + j * 8 + 4 * 16] = (ips114_bgcolor);
                     }
                     temp_bottom >>= 1;
                 }
             }
+            ips114_write_16bit_data_array(display_buffer, 8 * 16);
         }break;
         case IPS114_16X16_FONT:
         {
@@ -657,27 +713,30 @@ void ips114_show_binary_image (uint16 x, uint16 y, const uint8 *image, uint16 wi
 
     uint32 i = 0, j = 0;
     uint8 temp = 0;
-    uint32 width_index = 0, height_index = 0;
+    uint32 width_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint8 *image_temp;
 
     IPS114_CS(0);
     ips114_set_region(x, y, x + dis_width - 1, y + dis_height - 1);             // 设置显示区域
 
     for(j = 0; j < dis_height; j ++)
     {
-        height_index = j * height / dis_height;
+        image_temp = image + j * height / dis_height * width / 8;               // 直接对 image 操作会 Hardfault 暂时不知道为什么
         for(i = 0; i < dis_width; i ++)
         {
             width_index = i * width / dis_width;
-            temp = *(image + height_index * width / 8 + width_index / 8);       // 读取像素点
+            temp = *(image_temp + width_index / 8);                             // 读取像素点
             if(0x80 & (temp << (width_index % 8)))
             {
-                ips114_write_16bit_data(RGB565_WHITE);
+                data_buffer[i] = (RGB565_WHITE);
             }
             else
             {
-                ips114_write_16bit_data(RGB565_BLACK);
+                data_buffer[i] = (RGB565_BLACK);
             }
         }
+        ips114_write_16bit_data_array(data_buffer, dis_width);
     }
     IPS114_CS(1);
 }
@@ -709,34 +768,35 @@ void ips114_show_gray_image (uint16 x, uint16 y, const uint8 *image, uint16 widt
 
     uint32 i = 0, j = 0;
     uint16 color = 0,temp = 0;
-    uint32 width_index = 0, height_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint8 *image_temp;
 
     IPS114_CS(0);
     ips114_set_region(x, y, x + dis_width - 1, y + dis_height - 1);             // 设置显示区域
 
     for(j = 0; j < dis_height; j ++)
     {
-        height_index = j * height / dis_height;
+        image_temp = image + j * height / dis_height * width;                   // 直接对 image 操作会 Hardfault 暂时不知道为什么
         for(i = 0; i < dis_width; i ++)
         {
-            width_index = i * width / dis_width;
-            temp = *(image + height_index * width + width_index);               // 读取像素点
+            temp = *(image_temp + i * width / dis_width);               // 读取像素点
             if(threshold == 0)
             {
                 color = (0x001f & ((temp) >> 3)) << 11;
                 color = color | (((0x003f) & ((temp) >> 2)) << 5);
                 color = color | (0x001f & ((temp) >> 3));
-                ips114_write_16bit_data(color);
+                data_buffer[i] = (color);
             }
             else if(temp < threshold)
             {
-                ips114_write_16bit_data(RGB565_BLACK);
+                data_buffer[i] = (RGB565_BLACK);
             }
             else
             {
-                ips114_write_16bit_data(RGB565_WHITE);
+                data_buffer[i] = (RGB565_WHITE);
             }
         }
+        ips114_write_16bit_data_array(data_buffer, dis_width);
     }
     IPS114_CS(1);
 }
@@ -767,24 +827,26 @@ void ips114_show_rgb565_image (uint16 x, uint16 y, const uint16 *image, uint16 w
     zf_assert(NULL != image);
 
     uint32 i = 0, j = 0;
-    uint16 color = 0;
-    uint32 width_index = 0, height_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint16 *image_temp;
 
     IPS114_CS(0);
-    ips114_set_region(x, y, x + dis_width - 1, y + dis_height - 1);             // 设置显示区域
+    ips114_set_region(x, y, x + dis_width - 1, y + dis_height - 1);                 // 设置显示区域
 
     for(j = 0; j < dis_height; j ++)
     {
-        height_index = j * height / dis_height;
+        image_temp = image + j * height / dis_height * width;                   // 直接对 image 操作会 Hardfault 暂时不知道为什么
         for(i = 0; i < dis_width; i ++)
         {
-            width_index = i * width / dis_width;
-            color = *(image + height_index * width + width_index);              // 读取像素点
-            if(color_mode)
-            {
-                color = ((color & 0xff) << 8) | (color >> 8);
-            }
-            ips114_write_16bit_data(color);
+            data_buffer[i] = *(image_temp + i * width / dis_width); // 读取像素点
+        }
+        if(color_mode)
+        {
+            ips114_write_8bit_data_array((uint8 *)data_buffer, dis_width * 2);
+        }
+        else
+        {
+            ips114_write_16bit_data_array(data_buffer, dis_width);
         }
     }
     IPS114_CS(1);
@@ -813,15 +875,18 @@ void ips114_show_wave (uint16 x, uint16 y, const uint16 *wave, uint16 width, uin
 
     uint32 i = 0, j = 0;
     uint32 width_index = 0, value_max_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint16 *wave_temp;
 
     IPS114_CS(0);
     ips114_set_region(x, y, x + dis_width - 1, y + dis_value_max - 1);          // 设置显示区域
-    for(i = 0; i < dis_value_max; i ++)
+    for(j = 0; j < dis_value_max; j ++)
     {
-        for(j = 0; j < dis_width; j ++)
+        for(i = 0; i < dis_width; i ++)
         {
-            ips114_write_16bit_data(ips114_bgcolor); 
+            data_buffer[i] = (ips114_bgcolor); 
         }
+        ips114_write_16bit_data_array(data_buffer, dis_width);
     }
     IPS114_CS(1);
 
@@ -914,20 +979,20 @@ void ips114_init (void)
     ips114_set_color(ips114_pencolor, ips114_bgcolor);
 
     IPS114_RST(0);
-    system_delay_ms(200);
+    system_delay_ms(10);
 
     IPS114_RST(1);
-    system_delay_ms(100);
+    system_delay_ms(120);
 
     IPS114_CS(0);
+    ips114_write_index(0x11);
     ips114_write_index(0x36);
-    system_delay_ms(100);
     switch(ips114_display_dir)
     {
-        case IPS114_PORTAIT:        ips114_write_8bit_data(0x00);   break;
-        case IPS114_PORTAIT_180:    ips114_write_8bit_data(0xC0);   break;
-        case IPS114_CROSSWISE:      ips114_write_8bit_data(0x70);   break;
-        case IPS114_CROSSWISE_180:  ips114_write_8bit_data(0xA0);   break;
+        case IPS114_PORTAIT:        ips114_write_8bit_data(0xA0);   break;
+        case IPS114_PORTAIT_180:    ips114_write_8bit_data(0x70);   break;
+        case IPS114_CROSSWISE:      ips114_write_8bit_data(0x00);   break;
+        case IPS114_CROSSWISE_180:  ips114_write_8bit_data(0xC0);   break;
     }
 
     ips114_write_index(0x3A);
@@ -998,9 +1063,6 @@ void ips114_init (void)
     ips114_write_8bit_data(0x23);
 
     ips114_write_index(0x21);
-
-    ips114_write_index(0x11);
-    system_delay_ms(120);
 
     ips114_write_index(0x29);
     IPS114_CS(1);

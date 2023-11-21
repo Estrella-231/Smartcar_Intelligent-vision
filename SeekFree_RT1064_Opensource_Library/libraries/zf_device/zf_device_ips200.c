@@ -94,7 +94,17 @@ static soft_spi_info_struct                 ips200_spi;
 // 使用示例     ips200_write_8bit_data_spi(command);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips200_write_8bit_data_spi(data)    (soft_spi_write_8bit(&ips200_spi, (data)))
+#define ips200_write_8bit_data_spi(data)                (soft_spi_write_8bit(&ips200_spi, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS200 SPI 写 8bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips200_write_8bit_data_spi_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips200_write_8bit_data_spi_array(data, len)     (soft_spi_write_8bit_array(&ips200_spi, (data), (len)))
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS200 SPI 写 16bit 数据
@@ -103,7 +113,17 @@ static soft_spi_info_struct                 ips200_spi;
 // 使用示例     ips200_write_16bit_data_spi(dat);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips200_write_16bit_data_spi(data)   (soft_spi_write_16bit(&ips200_spi, (data)))
+#define ips200_write_16bit_data_spi(data)               (soft_spi_write_16bit(&ips200_spi, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS200 SPI 写 16bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips200_write_16bit_data_spi_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips200_write_16bit_data_spi_array(data, len)    (soft_spi_write_16bit_array(&ips200_spi, (data), (len)))
 #else
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS200 SPI 写 8bit 数据
@@ -112,7 +132,17 @@ static soft_spi_info_struct                 ips200_spi;
 // 使用示例     ips200_write_8bit_data_spi(command);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips200_write_8bit_data_spi(data)    (spi_write_8bit(IPS200_SPI, (data)))
+#define ips200_write_8bit_data_spi(data)                (spi_write_8bit(IPS200_SPI, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS200 SPI 写 8bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips200_write_8bit_data_spi_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips200_write_8bit_data_spi_array(data, len)     (spi_write_8bit_array(IPS200_SPI, (data), (len)))
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS200 SPI 写 16bit 数据
@@ -121,7 +151,17 @@ static soft_spi_info_struct                 ips200_spi;
 // 使用示例     ips200_write_16bit_data_spi(dat);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define ips200_write_16bit_data_spi(data)   (spi_write_16bit(IPS200_SPI, (data)))
+#define ips200_write_16bit_data_spi(data)               (spi_write_16bit(IPS200_SPI, (data)))
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS200 SPI 写 16bit 数据数组
+// 参数说明     *data           数据
+// 参数说明     len             数据长度
+// 返回参数     void
+// 使用示例     ips200_write_16bit_data_spi_array(data, len);
+// 备注信息     内部调用
+//-------------------------------------------------------------------------------------------------------------------
+#define ips200_write_16bit_data_spi_array(data, len)    (spi_write_16bit_array(IPS200_SPI, (data), (len)))
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -192,6 +232,35 @@ static void ips200_write_8bit_data (const uint8 dat)
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS200 向液晶屏写 8bit 数据
+// 参数说明     dat             数据
+// 返回参数     void
+// 使用示例     ips200_write_8bit_data(0x0C);
+// 备注信息     内部调用 用户无需关心
+//-------------------------------------------------------------------------------------------------------------------
+static void ips200_write_8bit_data_array (const uint8 *dat, uint32 len)
+{
+    if(IPS200_TYPE_SPI == ips200_display_type)
+    {
+        ips200_write_8bit_data_spi_array(dat, len);
+    }
+    else
+    {
+        IPS200_CS(0);
+        IPS200_RS(1);
+        IPS200_RD(1);
+        while(len --)
+        {
+            IPS200_WR(0);
+            ips200_write_data((uint8)*dat);
+            IPS200_WR(1);
+            dat ++;
+        }
+        IPS200_CS(1);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS200 向液晶屏写 16bit 数据
 // 参数说明     dat             数据
 // 返回参数     void
@@ -215,6 +284,38 @@ static void ips200_write_16bit_data (const uint16 dat)
         IPS200_WR(0);
         ips200_write_data(dat);
         IPS200_WR(1);
+        IPS200_CS(1);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     IPS200 向液晶屏写 16bit 数据
+// 参数说明     dat             数据
+// 返回参数     void
+// 使用示例     ips200_write_16bit_data(x1);
+// 备注信息     内部调用 用户无需关心
+//-------------------------------------------------------------------------------------------------------------------
+static void ips200_write_16bit_data_array (const uint16 *dat, uint32 len)
+{
+    if(IPS200_TYPE_SPI == ips200_display_type)
+    {
+        ips200_write_16bit_data_spi_array(dat, len);
+    }
+    else
+    {
+        IPS200_CS(0);
+        IPS200_RS(1);
+        IPS200_RD(1);
+        while(len --)
+        {
+            IPS200_WR(0);
+            ips200_write_data((uint8)(*dat >> 8));
+            IPS200_WR(1);
+            IPS200_WR(0);
+            ips200_write_data((uint8)(*dat & 0xFF));
+            IPS200_WR(1);
+            dat ++;
+        }
         IPS200_CS(1);
     }
 }
@@ -298,7 +399,9 @@ static void ips200_debug_init (void)
 //-------------------------------------------------------------------------------------------------------------------
 void ips200_clear (void)
 {
+    uint16 color_buffer[ips200_x_max];
     uint16 i = 0, j = 0;
+
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
         IPS200_CS(0);
@@ -306,10 +409,11 @@ void ips200_clear (void)
     ips200_set_region(0, 0, ips200_x_max - 1, ips200_y_max - 1);
     for(i = 0; i < ips200_x_max; i ++)
     {
-        for (j = 0; j < ips200_y_max; j ++)
-        {
-            ips200_write_16bit_data(ips200_bgcolor);                 
-        }
+        color_buffer[i] = ips200_bgcolor;
+    }
+    for (j = 0; j < ips200_y_max; j ++)
+    {
+        ips200_write_16bit_data_array(color_buffer, ips200_x_max);
     }
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -326,7 +430,9 @@ void ips200_clear (void)
 //-------------------------------------------------------------------------------------------------------------------
 void ips200_full (const uint16 color)
 {
+    uint16 color_buffer[ips200_x_max];
     uint16 i = 0, j = 0;
+
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
         IPS200_CS(0);
@@ -334,10 +440,11 @@ void ips200_full (const uint16 color)
     ips200_set_region(0, 0, ips200_x_max - 1, ips200_y_max - 1);
     for(i = 0; i < ips200_x_max; i ++)
     {
-        for (j = 0; j < ips200_y_max; j ++)
-        {
-            ips200_write_16bit_data(color);                 
-        }
+        color_buffer[i] = color;
+    }
+    for (j = 0; j < ips200_y_max; j ++)
+    {
+        ips200_write_16bit_data_array(color_buffer, ips200_x_max);
     }
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -465,6 +572,7 @@ void ips200_draw_line (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_en
                 ips200_draw_point(x_start, y_start, color);
                 y_start += y_dir;
             }
+            ips200_draw_point(x_start, y_start, color);
             break;
         }
         if(func_abs(y_start - y_end) > func_abs(x_start - x_end))
@@ -475,6 +583,7 @@ void ips200_draw_line (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_en
                 y_start += y_dir;
                 x_start = (int16)(((float)y_start - temp_b) / temp_rate);
             }
+            ips200_draw_point(x_start, y_start, color);
         }
         else
         {
@@ -484,6 +593,7 @@ void ips200_draw_line (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_en
                 x_start += x_dir;
                 y_start = (int16)((float)x_start * temp_rate + temp_b);
             }
+            ips200_draw_point(x_start, y_start, color);
         }
     }while(0);
 }
@@ -514,42 +624,44 @@ void ips200_show_char (uint16 x, uint16 y, const char dat)
     {
         case IPS200_6X8_FONT:
         {
+            uint16 display_buffer[6*8];
+            ips200_set_region(x, y, x + 5, y + 7);
             for(i = 0; 6 > i; i ++)
             {
-                ips200_set_region(x + i, y, x + i, y + 8);
                 // 减 32 因为是取模是从空格开始取得 空格在 ascii 中序号是 32
                 uint8 temp_top = ascii_font_6x8[dat - 32][i];
                 for(j = 0; 8 > j; j ++)
                 {
                     if(temp_top & 0x01)
                     {
-                        ips200_write_16bit_data(ips200_pencolor);
+                        display_buffer[i + j * 6] = (ips200_pencolor);
                     }
                     else
                     {
-                        ips200_write_16bit_data(ips200_bgcolor);
+                        display_buffer[i + j * 6] = (ips200_bgcolor);
                     }
                     temp_top >>= 1;
                 }
             }
+            ips200_write_16bit_data_array(display_buffer, 6*8);
         }break;
         case IPS200_8X16_FONT:
         {
+            uint16 display_buffer[8*16];
+            ips200_set_region(x, y, x + 7, y + 15);
             for(i = 0; 8 > i; i ++)
             {
-                ips200_set_region(x + i, y, x + i, y + 15);
-                // 减 32 因为是取模是从空格开始取得 空格在 ascii 中序号是 32
                 uint8 temp_top = ascii_font_8x16[dat - 32][i];
                 uint8 temp_bottom = ascii_font_8x16[dat - 32][i + 8];
                 for(j = 0; 8 > j; j ++)
                 {
                     if(temp_top & 0x01)
                     {
-                        ips200_write_16bit_data(ips200_pencolor);
+                        display_buffer[i + j * 8] = (ips200_pencolor);
                     }
                     else
                     {
-                        ips200_write_16bit_data(ips200_bgcolor);
+                        display_buffer[i + j * 8] = (ips200_bgcolor);
                     }
                     temp_top >>= 1;
                 }
@@ -557,15 +669,16 @@ void ips200_show_char (uint16 x, uint16 y, const char dat)
                 {
                     if(temp_bottom & 0x01)
                     {
-                        ips200_write_16bit_data(ips200_pencolor);
+                        display_buffer[i + j * 8 + 4 * 16] = (ips200_pencolor);
                     }
                     else
                     {
-                        ips200_write_16bit_data(ips200_bgcolor);
+                        display_buffer[i + j * 8 + 4 * 16] = (ips200_bgcolor);
                     }
                     temp_bottom >>= 1;
                 }
             }
+            ips200_write_16bit_data_array(display_buffer, 8 * 16);
         }break;
         case IPS200_16X16_FONT:
         {
@@ -751,7 +864,9 @@ void ips200_show_binary_image (uint16 x, uint16 y, const uint8 *image, uint16 wi
 
     uint32 i = 0, j = 0;
     uint8 temp = 0;
-    uint32 width_index = 0, height_index = 0;
+    uint32 width_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint8 *image_temp;
 
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -761,20 +876,21 @@ void ips200_show_binary_image (uint16 x, uint16 y, const uint8 *image, uint16 wi
 
     for(j = 0; j < dis_height; j ++)
     {
-        height_index = j * height / dis_height;
+        image_temp = image + j * height / dis_height * width / 8;               // 直接对 image 操作会 Hardfault 暂时不知道为什么
         for(i = 0; i < dis_width; i ++)
         {
             width_index = i * width / dis_width;
-            temp = *(image + height_index * width / 8 + width_index / 8);       // 读取像素点
+            temp = *(image_temp + width_index / 8);                             // 读取像素点
             if(0x80 & (temp << (width_index % 8)))
             {
-                ips200_write_16bit_data(RGB565_WHITE);
+                data_buffer[i] = (RGB565_WHITE);
             }
             else
             {
-                ips200_write_16bit_data(RGB565_BLACK);
+                data_buffer[i] = (RGB565_BLACK);
             }
         }
+        ips200_write_16bit_data_array(data_buffer, dis_width);
     }
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -809,7 +925,8 @@ void ips200_show_gray_image (uint16 x, uint16 y, const uint8 *image, uint16 widt
 
     uint32 i = 0, j = 0;
     uint16 color = 0,temp = 0;
-    uint32 width_index = 0, height_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint8 *image_temp;
 
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -819,27 +936,27 @@ void ips200_show_gray_image (uint16 x, uint16 y, const uint8 *image, uint16 widt
 
     for(j = 0; j < dis_height; j ++)
     {
-        height_index = j * height / dis_height;
+        image_temp = image + j * height / dis_height * width;                   // 直接对 image 操作会 Hardfault 暂时不知道为什么
         for(i = 0; i < dis_width; i ++)
         {
-            width_index = i * width / dis_width;
-            temp = *(image + height_index * width + width_index);               // 读取像素点
+            temp = *(image_temp + i * width / dis_width);                       // 读取像素点
             if(threshold == 0)
             {
                 color = (0x001f & ((temp) >> 3)) << 11;
                 color = color | (((0x003f) & ((temp) >> 2)) << 5);
                 color = color | (0x001f & ((temp) >> 3));
-                ips200_write_16bit_data(color);
+                data_buffer[i] = (color);
             }
             else if(temp < threshold)
             {
-                ips200_write_16bit_data(RGB565_BLACK);
+                data_buffer[i] = (RGB565_BLACK);
             }
             else
             {
-                ips200_write_16bit_data(RGB565_WHITE);
+                data_buffer[i] = (RGB565_WHITE);
             }
         }
+        ips200_write_16bit_data_array(data_buffer, dis_width);
     }
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -873,8 +990,8 @@ void ips200_show_rgb565_image (uint16 x, uint16 y, const uint16 *image, uint16 w
     zf_assert(NULL != image);
 
     uint32 i = 0, j = 0;
-    uint16 color = 0;
-    uint32 width_index = 0, height_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint16 *image_temp;
 
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -884,16 +1001,18 @@ void ips200_show_rgb565_image (uint16 x, uint16 y, const uint16 *image, uint16 w
 
     for(j = 0; j < dis_height; j ++)
     {
-        height_index = j * height / dis_height;
+        image_temp = image + j * height / dis_height * width;                   // 直接对 image 操作会 Hardfault 暂时不知道为什么
         for(i = 0; i < dis_width; i ++)
         {
-            width_index = i * width / dis_width;
-            color = *(image + height_index * width + width_index);              // 读取像素点
-            if(color_mode)
-            {
-                color = ((color & 0xff) << 8) | (color >> 8);
-            }
-            ips200_write_16bit_data(color);
+            data_buffer[i] = *(image_temp + i * width / dis_width);             // 读取像素点
+        }
+        if(color_mode)
+        {
+            ips200_write_8bit_data_array((uint8 *)data_buffer, dis_width * 2);
+        }
+        else
+        {
+            ips200_write_16bit_data_array(data_buffer, dis_width);
         }
     }
     if(IPS200_TYPE_SPI == ips200_display_type)
@@ -925,18 +1044,21 @@ void ips200_show_wave (uint16 x, uint16 y, const uint16 *wave, uint16 width, uin
 
     uint32 i = 0, j = 0;
     uint32 width_index = 0, value_max_index = 0;
+    uint16 data_buffer[dis_width];
+    const uint16 *wave_temp;
 
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
         IPS200_CS(0);
     }
     ips200_set_region(x, y, x + dis_width - 1, y + dis_value_max - 1);          // 设置显示区域
-    for(i = 0; i < dis_value_max; i ++)
+    for(j = 0; j < dis_value_max; j ++)
     {
-        for(j = 0; j < dis_width; j ++)
+        for(i = 0; i < dis_width; i ++)
         {
-            ips200_write_16bit_data(ips200_bgcolor); 
+            data_buffer[i] = (ips200_bgcolor); 
         }
+        ips200_write_16bit_data_array(data_buffer, dis_width);
     }
     if(IPS200_TYPE_SPI == ips200_display_type)
     {
@@ -1078,8 +1200,6 @@ void ips200_init (ips200_type_enum type_select)
         IPS200_CS(0);
     }
     ips200_write_command(0x11);
-    system_delay_ms(120);
-
     ips200_write_command(0x36);
     switch(ips200_display_dir)
     {

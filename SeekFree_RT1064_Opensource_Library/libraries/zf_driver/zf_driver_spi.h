@@ -102,6 +102,12 @@ typedef enum                                                                    
     SPI_MODE3,
 }spi_mode_enum;
 
+typedef enum                                                                    // 枚举 SPI 位数 此枚举定义不允许用户修改
+{
+    SPI_8BIT,
+    SPI_16BIT,
+}spi_bit_enum;
+
 typedef enum                                                                    // 枚举 SPI 编号 此枚举定义不允许用户修改
 {
     SPI_1 = 1,

@@ -71,9 +71,9 @@
 #define OLED_DC_PIN                     (C19)                                   // 液晶命令位引脚定义
 #define OLED_CS_PIN                     (B3 )                                   // CS 片选引脚
                                          
-#define OLED_BRIGHTNESS                 (0x7f)                                  // 设置OLED亮度 越大越亮 范围0-0XFF
-#define OLED_DEFAULT_DISPLAY_DIR        (OLED_CROSSWISE)                        // 默认的显示方向
-#define OLED_DEFAULT_DISPLAY_FONT       (OLED_6X8_FONT )                        // 默认的字体模式
+#define OLED_BRIGHTNESS                 ( 0x7f )                                // 设置OLED亮度 越大越亮 范围0-0XFF
+#define OLED_DEFAULT_DISPLAY_DIR        ( OLED_PORTAIT )                        // 默认的显示方向
+#define OLED_DEFAULT_DISPLAY_FONT       ( OLED_6X8_FONT  )                      // 默认的字体模式
 
 #define OLED_RES(x)                     ((x) ? (gpio_high(OLED_RES_PIN)) : (gpio_low(OLED_RES_PIN)))
 #define OLED_DC(x)                      ((x) ? (gpio_high(OLED_DC_PIN)) : (gpio_low(OLED_DC_PIN)))
@@ -81,8 +81,8 @@
 
 typedef enum
 {
-    OLED_CROSSWISE                      = 0,                                    // 横屏模式
-    OLED_CROSSWISE_180                  = 1,                                    // 横屏模式  旋转180
+    OLED_PORTAIT                        = 0,                                    // 竖屏模式
+    OLED_PORTAIT_180                    = 1,                                    // 竖屏模式  旋转180
 }oled_dir_enum;
 
 typedef enum

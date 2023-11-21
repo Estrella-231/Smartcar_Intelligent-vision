@@ -726,7 +726,7 @@ void oled_init (void)
     oled_write_command(0x81);                                                   // --set contrast control register
     oled_write_command(OLED_BRIGHTNESS);                                        //  Set SEG Output Current Brightness
 
-    if(OLED_CROSSWISE == oled_display_dir)
+    if(OLED_PORTAIT == oled_display_dir)
     {
         oled_write_command(0xa1);                                               // --Set SEG/Column Mapping     0xa0左右反置 0xa1正常
         oled_write_command(0xc8);                                               // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常

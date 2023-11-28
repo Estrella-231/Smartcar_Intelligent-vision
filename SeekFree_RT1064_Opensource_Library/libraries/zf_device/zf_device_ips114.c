@@ -876,7 +876,6 @@ void ips114_show_wave (uint16 x, uint16 y, const uint16 *wave, uint16 width, uin
     uint32 i = 0, j = 0;
     uint32 width_index = 0, value_max_index = 0;
     uint16 data_buffer[dis_width];
-    const uint16 *wave_temp;
 
     IPS114_CS(0);
     ips114_set_region(x, y, x + dis_width - 1, y + dis_value_max - 1);          // …Ë÷√œ‘ æ«¯”Ú

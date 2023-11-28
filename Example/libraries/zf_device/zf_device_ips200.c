@@ -1045,7 +1045,6 @@ void ips200_show_wave (uint16 x, uint16 y, const uint16 *wave, uint16 width, uin
     uint32 i = 0, j = 0;
     uint32 width_index = 0, value_max_index = 0;
     uint16 data_buffer[dis_width];
-    const uint16 *wave_temp;
 
     if(IPS200_TYPE_SPI == ips200_display_type)
     {

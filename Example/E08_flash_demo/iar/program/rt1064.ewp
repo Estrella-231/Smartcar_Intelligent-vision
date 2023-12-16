@@ -273,7 +273,7 @@
                 </option>
                 <option>
                     <name>CCDiagSuppress</name>
-                    <state>Pa082,Pa050</state>
+                    <state>Pa082,Pa050,Pa039</state>
                 </option>
                 <option>
                     <name>CCDiagRemark</name>
@@ -389,6 +389,7 @@
                     <state>$PROJ_DIR$\..\..\..\libraries\zf_common</state>
                     <state>$PROJ_DIR$\..\..\..\libraries\zf_driver</state>
                     <state>$PROJ_DIR$\..\..\..\libraries\zf_device</state>
+                    <state>$PROJ_DIR$\..\..\..\libraries\zf_components</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1229,7 +1230,7 @@
             <name>$PROJ_DIR$\..\..\..\libraries\sdk\xip\evkmimxrt1064_flexspi_nor_config.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\libraries\sdk\xip\EVKMIMXRT1064_FLEXSPI_NOR_CONFIG.h</name>
+            <name>$PROJ_DIR$\..\..\..\libraries\sdk\xip\evkmimxrt1064_flexspi_nor_config.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\..\libraries\sdk\xip\evkmimxrt1064_sdram_ini_dcd.c</name>
@@ -1788,6 +1789,18 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\..\libraries\zf_common\zf_common_vector.h</name>
+        </file>
+    </group>
+    <group>
+        <name>zf_components</name>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\libraries\zf_components\seekfree_assistant.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\libraries\zf_components\seekfree_assistant.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\libraries\zf_components\seekfree_assistant_interface.c</name>
         </file>
     </group>
     <group>

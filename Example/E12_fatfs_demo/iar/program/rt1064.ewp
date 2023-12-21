@@ -1947,6 +1947,12 @@
             <name>$PROJ_DIR$\..\..\..\libraries\zf_device\zf_device_virtual_oscilloscope.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\..\..\..\libraries\zf_device\zf_device_wifi_spi.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\libraries\zf_device\zf_device_wifi_spi.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\..\..\libraries\zf_device\zf_device_wifi_uart.c</name>
         </file>
         <file>

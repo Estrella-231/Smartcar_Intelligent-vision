@@ -1002,6 +1002,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\libraries\zf_components\seekfree_assistant_interface.c</FilePath>
             </File>
+            <File>
+              <FileName>seekfree_assistant_interface.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\libraries\zf_components\seekfree_assistant_interface.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

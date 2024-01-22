@@ -1802,6 +1802,9 @@
         <file>
             <name>$PROJ_DIR$\..\..\..\libraries\zf_components\seekfree_assistant_interface.c</name>
         </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\libraries\zf_components\seekfree_assistant_interface.h</name>
+        </file>
     </group>
     <group>
         <name>zf_device</name>

@@ -21,7 +21,7 @@
 * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
 * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本声明）
 * 
-* 文件名称          seekfree_assistant
+* 文件名称          seekfree_assistant_interface
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
 * 开发环境          IAR 8.32.4 or MDK 5.33
@@ -29,13 +29,26 @@
 * 店铺链接          https://seekfree.taobao.com/
 * 
 * 修改记录
-* 日期         作者             备注
-* 2023-11-29     大W             first version
+* 日期             作者             备注
+* 2024-1-11        SeekFree         first version
 ********************************************************************************************************************/
 
 #include "zf_common_typedef.h"
+#include "zf_common_fifo.h"
+#include "zf_common_debug.h"
+#include "zf_driver_uart.h"
 #include "zf_device_wireless_uart.h"
+#include "zf_device_bluetooth_ch9141.h"
+#include "zf_device_wifi_uart.h"
+#include "zf_device_wifi_spi.h"
 #include "seekfree_assistant.h"
+
+#include "seekfree_assistant_interface.h"
+
+
+extern seekfree_assistant_transfer_callback_function   seekfree_assistant_transfer_callback;    // 数据发送函数指针
+extern seekfree_assistant_receive_callback_function    seekfree_assistant_receive_callback;     // 数据接收函数指针
+
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     逐飞助手发送函数
@@ -46,11 +59,9 @@
 //-------------------------------------------------------------------------------------------------------------------
 ZF_WEAK uint32 seekfree_assistant_transfer (const uint8 *buff, uint32 length)
 {
-    uint32 len = 0;
-
-    len = debug_send_buffer(buff, length);
-
-    return len;
+    
+    // 当选择自定义通讯方式时 需要自行完成数据发送功能
+    return length;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -62,11 +73,57 @@ ZF_WEAK uint32 seekfree_assistant_transfer (const uint8 *buff, uint32 length)
 //-------------------------------------------------------------------------------------------------------------------
 ZF_WEAK uint32 seekfree_assistant_receive (uint8 *buff, uint32 length)
 {
-    uint32 len = 0;
+    // 当选择自定义通讯方式时 需要自行完成数据接收功能
+    return 0;
+}
 
-    len = debug_read_ring_buffer(buff, length);
-
-    return len;
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     逐飞助手接口 初始化
+// 参数说明
+// 返回参数     void
+// 使用示例     seekfree_assistant_interface_init(SEEKFREE_ASSISTANT_WIFI_SPI); 使用高速WIFI SPI模块进行数据收发
+// 备注         需要自行调用设备的初始化，例如使用无线转串口进行数据的收发，则需要自行调用无线转串口的初始化，然后再调用seekfree_assistant_interface_init完成逐飞助手的接口初始化
+//-------------------------------------------------------------------------------------------------------------------
+ZF_WEAK void seekfree_assistant_interface_init (seekfree_assistant_transfer_device_enum transfer_device)
+{
+    switch(transfer_device)
+    {
+        case SEEKFREE_ASSISTANT_DEBUG_UART:
+        {
+            seekfree_assistant_transfer_callback = debug_send_buffer;
+            seekfree_assistant_receive_callback = debug_read_ring_buffer;
+        }break;
+        
+        case SEEKFREE_ASSISTANT_WIRELESS_UART:
+        {
+            seekfree_assistant_transfer_callback = wireless_uart_send_buffer;
+            seekfree_assistant_receive_callback = wireless_uart_read_buffer;
+        }break;
+        
+        case SEEKFREE_ASSISTANT_CH9141:
+        {
+            seekfree_assistant_transfer_callback = bluetooth_ch9141_send_buffer;
+            seekfree_assistant_receive_callback = bluetooth_ch9141_read_buffer;
+        }break;
+        
+        case SEEKFREE_ASSISTANT_WIFI_UART:
+        {
+            seekfree_assistant_transfer_callback = wifi_uart_send_buffer;
+            seekfree_assistant_receive_callback = wifi_uart_read_buffer;
+        }break;
+        
+        case SEEKFREE_ASSISTANT_WIFI_SPI:
+        {
+            seekfree_assistant_transfer_callback = wifi_spi_send_buffer;
+            seekfree_assistant_receive_callback = wifi_spi_read_buffer;
+        }break;
+        
+        case SEEKFREE_ASSISTANT_CUSTOM:
+        {         
+            // 根据自己的需求 自行实现seekfree_assistant_transfer与seekfree_assistant_receive函数，完成数据的收发
+            
+        }break;
+    }
 }
 
 

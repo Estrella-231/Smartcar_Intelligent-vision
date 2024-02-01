@@ -34,6 +34,7 @@
 ********************************************************************************************************************/
 
 #include "zf_common_headfile.h"
+#include "zf_common_debug.h"
 #include "isr.h"
 
 
@@ -70,16 +71,14 @@ void PIT_IRQHandler(void)
     __DSB();
 }
 
-void uart_rx_interrupt_handler (void);
 void LPUART1_IRQHandler(void)
 {
     if(kLPUART_RxDataRegFullFlag & LPUART_GetStatusFlags(LPUART1))
     {
         // 接收中断
-	#if DEBUG_UART_USE_INTERRUPT                        // 如果开启 debug 串口中断
+    #if DEBUG_UART_USE_INTERRUPT                        // 如果开启 debug 串口中断
         debug_interrupr_handler();                      // 调用 debug 串口接收处理函数 数据会被 debug 环形缓冲区读取
     #endif                                              // 如果修改了 DEBUG_UART_INDEX 那这段代码需要放到对应的串口中断去
-        uart_rx_interrupt_handler();
     }
         
     LPUART_ClearStatusFlags(LPUART1, kLPUART_RxOverrunFlag);    // 不允许删除
@@ -114,7 +113,7 @@ void LPUART4_IRQHandler(void)
         // 接收中断 
         flexio_camera_uart_handler();
         
-        gps_uart_callback();
+        gnss_uart_callback();
     }
         
     LPUART_ClearStatusFlags(LPUART4, kLPUART_RxOverrunFlag);    // 不允许删除
@@ -187,7 +186,6 @@ void GPIO2_Combined_0_15_IRQHandler(void)
     }
 
 }
-
 
 void GPIO2_Combined_16_31_IRQHandler(void)
 {

@@ -743,16 +743,6 @@
               <FilePath>..\..\libraries\zf_device\zf_device_camera.h</FilePath>
             </File>
             <File>
-              <FileName>zf_device_gps_tau1201.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\libraries\zf_device\zf_device_gps_tau1201.c</FilePath>
-            </File>
-            <File>
-              <FileName>zf_device_gps_tau1201.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\libraries\zf_device\zf_device_gps_tau1201.h</FilePath>
-            </File>
-            <File>
               <FileName>zf_device_icm20602.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\libraries\zf_device\zf_device_icm20602.c</FilePath>
@@ -981,6 +971,16 @@
               <FileName>zf_device_wifi_spi.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\..\libraries\zf_device\zf_device_wifi_spi.h</FilePath>
+            </File>
+            <File>
+              <FileName>zf_device_gnss.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\libraries\zf_device\zf_device_gnss.c</FilePath>
+            </File>
+            <File>
+              <FileName>zf_device_gnss.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\libraries\zf_device\zf_device_gnss.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -50,6 +50,8 @@ void PIT_IRQHandler(void)
 {
     if(pit_flag_get(PIT_CH0))
     {
+        extern void pit_exti_handler();
+        pit_exti_handler();
         pit_flag_clear(PIT_CH0);
     }
     
@@ -197,7 +199,6 @@ void GPIO2_Combined_16_31_IRQHandler(void)
     {
         exti_flag_clear(C16); // 清除中断标志位
     }
-    
 }
 
 

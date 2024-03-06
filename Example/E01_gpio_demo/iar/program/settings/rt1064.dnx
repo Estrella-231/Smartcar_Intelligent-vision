@@ -16,10 +16,10 @@
         <MemConfigValue>C:\IAR Systems\Embedded Workbench 8.2\arm\CONFIG\debugger\NXP\MIMXRT1064xxx6A.ddf</MemConfigValue>
     </PlDriver>
     <Jet>
-        <JetConnSerialNo>ZF-HS CMSIS-DAP V1:808C1884-26CB7839</JetConnSerialNo>
-        <JetConnFoundProbes />
         <PrevWtdReset>System</PrevWtdReset>
         <OnlineReset>Software</OnlineReset>
+        <JetConnSerialNo>SEEKFREE CMSIS-DAP V2:0</JetConnSerialNo>
+        <JetConnFoundProbes>SEEKFREE CMSIS-DAP V1:0123456789:SEEKFREE CMSIS-DAP V2:0:</JetConnFoundProbes>
         <DisableInterrupts>0</DisableInterrupts>
         <LeaveRunning>1</LeaveRunning>
         <MultiCoreRunAll>0</MultiCoreRunAll>
@@ -44,8 +44,8 @@
     <SWOManager>
         <SamplingDivider>8192</SamplingDivider>
         <OverrideClock>0</OverrideClock>
-        <CpuClock>197632</CpuClock>
-        <SwoClock>1024</SwoClock>
+        <CpuClock>7536741</CpuClock>
+        <SwoClock>7536732</SwoClock>
         <DataLogMode>0</DataLogMode>
         <ItmPortsEnabled>63</ItmPortsEnabled>
         <ItmTermIOPorts>1</ItmTermIOPorts>

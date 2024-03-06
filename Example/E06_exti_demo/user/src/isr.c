@@ -175,7 +175,10 @@ void GPIO1_Combined_16_31_IRQHandler(void)
 
     
 }
-
+extern void key1_exti_handler();
+extern void key2_exti_handler();
+extern void key3_exti_handler();
+extern void key4_exti_handler();
 void GPIO2_Combined_0_15_IRQHandler(void)
 {
     flexio_camera_vsync_handler();
@@ -184,7 +187,12 @@ void GPIO2_Combined_0_15_IRQHandler(void)
     {
         exti_flag_clear(C0);// 清除中断标志位
     }
-
+    
+    key1_exti_handler();
+    key2_exti_handler();    
+    key3_exti_handler();    
+    key4_exti_handler();    
+    
 }
 
 void GPIO2_Combined_16_31_IRQHandler(void)

@@ -540,7 +540,7 @@ uint8 scc8660_init (void)
             // SCCB通讯失败，尝试串口通讯
             scc8660_type = SCC8660_UART;
             camera_fifo_init();
-            set_camera_type(CAMERA_GRAYSCALE, NULL, NULL, &scc8660_uart_callback);  // 设置连接摄像头类型
+            set_camera_type(CAMERA_COLOR, NULL, NULL, &scc8660_uart_callback);  // 设置连接摄像头类型
             uart_init (SCC8660_COF_UART, SCC8660_COF_BAUR, SCC8660_COF_UART_RX, SCC8660_COF_UART_TX);	//初始换串口 配置摄像头    
             uart_rx_interrupt(SCC8660_COF_UART, 1);
             fifo_clear(&camera_receiver_fifo);

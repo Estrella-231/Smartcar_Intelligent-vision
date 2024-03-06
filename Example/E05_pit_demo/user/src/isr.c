@@ -50,6 +50,8 @@ void PIT_IRQHandler(void)
 {
     if(pit_flag_get(PIT_CH0))
     {
+        extern void pit_handler();
+        pit_handler();
         pit_flag_clear(PIT_CH0);
     }
     

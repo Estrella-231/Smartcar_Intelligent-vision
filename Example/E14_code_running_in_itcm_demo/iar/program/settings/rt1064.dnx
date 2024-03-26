@@ -13,12 +13,12 @@
     </Stack>
     <PlDriver>
         <FirstRun>0</FirstRun>
-        <MemConfigValue>C:\IAR Systems\Embedded Workbench 8.2\arm\CONFIG\debugger\NXP\MIMXRT1064xxx6A.ddf</MemConfigValue>
+        <MemConfigValue>D:\Professional software\IAR8.3\arm\CONFIG\debugger\NXP\MIMXRT1064xxx6A.ddf</MemConfigValue>
     </PlDriver>
     <Jet>
-        <JetConnSerialNo>ZF-HS CMSIS-DAP V1:808C1884-26CB7839</JetConnSerialNo>
-        <JetConnFoundProbes>ZF-HS CMSIS-DAP V1:808C1884-26CB7839:ZF-HS CMSIS-DAP V2:0:</JetConnFoundProbes>
-        <PrevWtdReset>System</PrevWtdReset>
+        <JetConnSerialNo>SEEKFREE CMSIS-DAP V2:0</JetConnSerialNo>
+        <JetConnFoundProbes>SEEKFREE CMSIS-DAP V1:SF-2652601441471:SEEKFREE CMSIS-DAP V2:0:</JetConnFoundProbes>
+        <PrevWtdReset>Hardware</PrevWtdReset>
         <OnlineReset>Software</OnlineReset>
         <DisableInterrupts>0</DisableInterrupts>
         <LeaveRunning>1</LeaveRunning>
@@ -28,7 +28,7 @@
         <EnableCache>1</EnableCache>
     </ArmDriver>
     <DebugChecksum>
-        <Checksum>214201667</Checksum>
+        <Checksum>956042082</Checksum>
     </DebugChecksum>
     <Exceptions>
         <StopOnUncaught>_ 0</StopOnUncaught>

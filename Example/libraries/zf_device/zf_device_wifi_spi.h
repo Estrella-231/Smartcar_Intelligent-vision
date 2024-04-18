@@ -74,7 +74,7 @@
 #error "WIFI_SPI_AUTO_CONNECT 的值只能为 [0,1,2]" 
 #else   
 #define WIFI_SPI_TARGET_IP          "192.168.137.1"              // 连接目标的 IP
-#define WIFI_SPI_TARGET_PORT        "8080"                      // 连接目标的端口
+#define WIFI_SPI_TARGET_PORT        "9090"                      // 连接目标的端口
 #define WIFI_SPI_LOCAL_PORT         "6666"                      // 本机的端口 0：随机  可设置范围2048-65535  默认 6666
 #endif
 
@@ -139,12 +139,13 @@ extern char wifi_spi_version[12];                               // 固件版本     
 extern char wifi_spi_mac_addr[20];                              // 模块MAC地址      字符串
 extern char wifi_spi_ip_addr_port[25];                          // IP地址与端口号   字符串
 
-uint8  wifi_spi_wifi_connect        (char *wifi_ssid, char *pass_word);
-uint8  wifi_spi_socket_connect      (char *transport_type, char *ip_addr, char *port, char *local_port);
-uint8  wifi_spi_socket_disconnect   (void);
-uint8  wifi_spi_udp_send_now        (void);
-uint32 wifi_spi_send_buffer         (const uint8 *buff, uint32 length);
-uint32 wifi_spi_read_buffer         (uint8 *buffer, uint32 length);
+uint8   wifi_spi_wifi_connect       (char *wifi_ssid, char *pass_word);
+uint8   wifi_spi_socket_connect     (char *transport_type, char *ip_addr, char *port, char *local_port);
+uint8   wifi_spi_socket_disconnect  (void);
+uint8   wifi_spi_udp_send_now       (void);
+uint32  wifi_spi_send_buffer        (const uint8 *buff, uint32 length);
+void    wifi_spi_send_string        (const char *string);
+uint32  wifi_spi_read_buffer        (uint8 *buffer, uint32 length);
 
 uint8  wifi_spi_init                (char *wifi_ssid, char *pass_word);
 

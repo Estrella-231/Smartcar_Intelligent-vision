@@ -982,6 +982,16 @@
               <FileType>5</FileType>
               <FilePath>..\..\libraries\zf_device\zf_device_gnss.h</FilePath>
             </File>
+            <File>
+              <FileName>zf_device_ble6a20.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\libraries\zf_device\zf_device_ble6a20.c</FilePath>
+            </File>
+            <File>
+              <FileName>zf_device_ble6a20.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\libraries\zf_device\zf_device_ble6a20.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

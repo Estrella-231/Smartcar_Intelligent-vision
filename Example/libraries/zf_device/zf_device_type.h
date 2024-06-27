@@ -54,6 +54,7 @@ typedef enum
     BLUETOOTH_CH9141,                                                           // À¶ÑÀ CH9141
     WIFI_UART,                                                                  // Wi-Fi ´®¿Ú
     WIFI_SPI,                                                                   // Wi-Fi SPI
+    BLE6A20,                                                                    // ÎÞÏßBLE6A20                   
 }wireless_type_enum;
 
 typedef enum

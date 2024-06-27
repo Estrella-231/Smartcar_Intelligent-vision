@@ -110,6 +110,7 @@
 #include "zf_device_dl1a.h"
 #include "zf_device_dl1b.h"
 #include "zf_device_wifi_spi.h"
+#include "zf_device_ble6a20.h"
 #include "seekfree_assistant.h"
 #include "seekfree_assistant_interface.h"
 //===================================================外接设备驱动层===================================================

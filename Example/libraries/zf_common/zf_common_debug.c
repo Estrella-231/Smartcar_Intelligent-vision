@@ -286,7 +286,7 @@ uint32 debug_read_ring_buffer (uint8 *buff, uint32 len)
 //-------------------------------------------------------------------------------------------------------------------
 void debug_interrupr_handler (void)
 {
-    if(zf_debug_init_flag)
+    if(zf_debug_init_flag && !debug_output_info.type_index)
     {
         uart_query_byte(DEBUG_UART_INDEX, &debug_uart_data);                    // 读取串口数据
         fifo_write_buffer(&debug_uart_fifo, &debug_uart_data, 1);               // 存入 FIFO

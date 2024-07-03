@@ -213,16 +213,19 @@ uint32 ble6a20_read_buffer (uint8 *buff, uint32 len)
 //-------------------------------------------------------------------------------------------------------------------
 void ble6a20_callback (void)
 {
-    uart_query_byte(BLE6A20_INDEX, &ble6a20_data);
-    fifo_write_buffer(&ble6a20_fifo, &ble6a20_data, 1);
+    if(uart_query_byte(BLE6A20_INDEX, &ble6a20_data))
+	{
+		fifo_write_buffer(&ble6a20_fifo, &ble6a20_data, 1);
 #if BLE6A20_AUTO_BAUD_RATE                                                // 开启自动波特率
-    if(BLE6A20_AUTO_BAUD_RATE_START == ble6a20_auto_baud_flag && 3 == fifo_used(&ble6a20_fifo))
-    {
-        uint32 ble6a20_auto_baud_count = 3;
-        ble6a20_auto_baud_flag = BLE6A20_AUTO_BAUD_RATE_GET_ACK;
-        fifo_read_buffer(&ble6a20_fifo, (uint8 *)ble6a20_auto_baud_data, (uint32 *)&ble6a20_auto_baud_count, FIFO_READ_AND_CLEAN);
-    }
+		if(BLE6A20_AUTO_BAUD_RATE_START == ble6a20_auto_baud_flag && 3 == fifo_used(&ble6a20_fifo))
+		{
+			uint32 ble6a20_auto_baud_count = 3;
+			ble6a20_auto_baud_flag = BLE6A20_AUTO_BAUD_RATE_GET_ACK;
+			fifo_read_buffer(&ble6a20_fifo, (uint8 *)ble6a20_auto_baud_data, (uint32 *)&ble6a20_auto_baud_count, FIFO_READ_AND_CLEAN);
+		}
 #endif
+	}
+
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -237,7 +240,7 @@ uint8 ble6a20_init (void)
     uint8 return_state = 0;
 
     // 等待模块初始化
-    system_delay_ms(3);
+    system_delay_ms(50);
 
     set_wireless_type(BLE6A20, ble6a20_callback);
 

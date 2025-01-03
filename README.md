@@ -18,8 +18,8 @@
 - 推荐使用本公司RT1064核心板，[点击此处购买](https://item.taobao.com/item.htm?spm=a1z10.3-c.w4002-9998537997.49.4b7549ccjhU2eC&id=601759245205)，由于本开源库需要将用户代码+中断函数+中断向量表在上电后自动加载到外置SDRAM， **故不支持无外置SDRAM的核心板** 。
 2.  **软件开发环境：** 
 （IAR或MDK可任选其一）
-- IAR 推荐使用版本：IAR Embedded Workbench for ARM V8.32.4。（以下简称IAR）
-- MDK 推荐使用版本：MDK v5.24及以上。（5.26版本后加入了对DAP仿真器V2版本的支持，可以使用本公司DAP仿真器的WinUSB模式进行更高速的下载）
+- IAR 推荐使用版本：IAR Embedded Workbench for ARM V9.40.1。（以下简称IAR）
+- MDK 推荐使用版本：MDK v5.38a及以上。（5.26版本后加入了对DAP仿真器V2版本的支持，可以使用本公司DAP仿真器的WinUSB模式进行更高速的下载）
 3.  **仿真器：** 
 （DAP仿真器及J-Link仿真器可任选其一）
 - DAP仿真器：推荐使用本公司DAP仿真器，双下载模式，可以在支持的环境下实现更高下载速度。
@@ -34,5 +34,4 @@
 
 #### 逐飞科技RT1064核心板
 ![逐飞科技RT1064核心板](https://images.gitee.com/uploads/images/2019/0924/114657_c8e12b59_1699060.jpeg "逐飞科技RT1064核心板.jpg")
-
 

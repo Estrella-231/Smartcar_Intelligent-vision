@@ -209,6 +209,29 @@ static uint8 wifi_uart_echo_set (char *model)
 }
 
 //--------------------------------------------------------------------------------------------------
+// 函数简介     模块设置SNTP服务器
+// 返回参数     uint8_t           0：成功   1：失败
+// 使用示例     wifi_uart_sntp_time_set();//开启模块SNTP服务器
+// 备注信息     内部调用
+//--------------------------------------------------------------------------------------------------
+static uint8_t wifi_uart_sntp_time_set (void)
+{
+    uint8_t return_state = 0;
+
+    wifi_uart_clear_receive_buffer();                                           // 清空WiFi接收缓冲区
+    uart_write_string(WIFI_UART_INDEX, "AT+CIPSNTPCFG=1,0,\"ntp1.aliyun.com\",\"ntp.sjtu.edu.cn\"\r\n");
+    return_state = wifi_uart_wait_ack("OK", WAIT_TIME_OUT);
+    wifi_uart_clear_receive_buffer();                                           // 清空WiFi接收缓冲区
+    
+    uart_write_string(WIFI_UART_INDEX, "AT+CIPSNTPINTV=60\r\n");
+    return_state = wifi_uart_wait_ack("OK", WAIT_TIME_OUT);
+    SCB_InvalidateDCache_by_Addr(&return_state, sizeof(return_state));
+    wifi_uart_clear_receive_buffer();                                           // 清空WiFi接收缓冲区
+    
+    return return_state;
+}
+
+//--------------------------------------------------------------------------------------------------
 // 函数简介     设置模块的串口配置
 // 参数说明     baudrate        波特率  支持范围为 80 ~ 5000000
 // 参数说明     databits        数据位  5：5 bit 数据位----6：6 bit 数据位----7：7 bit 数据位----8：8 bit 数据位
@@ -505,6 +528,50 @@ uint8 wifi_uart_reset (void)
 }
 
 //--------------------------------------------------------------------------------------------------
+// 函数简介     获取GMT时间戳
+// 参数说明     gmt_time        时间戳字符串
+// 返回参数     uint8           0：成功   1：失败
+// 使用示例     wifi_uart_get_gmt_time();
+// 备注信息
+//--------------------------------------------------------------------------------------------------
+uint8 wifi_uart_get_gmt_time (char* gmt_time)
+{
+    char week_names[4], month_names[4], now_day[3], now_time[9], now_year[5];
+    uint8_t return_state = 0;
+    uint8_t receiver_buffer[64];
+    uint32_t receiver_len = 64;
+    char sntp_buffer[64];
+    
+    do
+    {
+        system_delay_ms(300);
+        wifi_uart_clear_receive_buffer();                                           // 清空WiFi接收缓冲区
+        uart_write_string(WIFI_UART_INDEX, "AT+CIPSNTPTIME?\r\n");
+        do
+        {
+            if(wifi_uart_wait_ack("OK", WAIT_TIME_OUT))
+            {
+                return_state = 1;
+                break;
+            }
+
+            fifo_read_buffer(&wifi_uart_fifo, receiver_buffer, &receiver_len, FIFO_READ_ONLY);
+            if(wifi_data_parse((uint8*)sntp_buffer, receiver_buffer, ':', '\r'))
+            {
+                return_state = 1;
+                break;
+            }
+            sscanf(sntp_buffer, "%3s %3s %2s %8s %4s", week_names, month_names, now_day, now_time, now_year);
+            sprintf(gmt_time, "%s, %s %s %s %s GMT", week_names, now_day, month_names, now_year, now_time);
+        }
+        while(0);
+        wifi_uart_clear_receive_buffer();                                           // 清空WiFi接收缓冲区
+    }
+    while(now_year[0] < '2');
+    return return_state;
+}
+
+//--------------------------------------------------------------------------------------------------
 // 函数简介     设置模块模式 (Station/SoftAP/Station+SoftAP)
 // 参数说明     state           0:无 Wi-Fi 模式，并且关闭 Wi-Fi RF----1: Station 模式----2: SoftAP 模式----3: SoftAP+Station 模式
 // 返回参数     uint8           0：成功   1：失败
@@ -652,8 +719,9 @@ uint8 wifi_uart_connect_tcp_servers (char *ip, char *port, wifi_uart_transfer_mo
             char* end_index = NULL;
 
             buffer_index += 22;
-            buffer_index += strlen(ip);
+            buffer_index = strchr(buffer_index, ',');
             buffer_index += strlen(port);
+            buffer_index = strchr(buffer_index, ',') + 1;
             end_index = strchr(buffer_index, ',');
 
             memcpy(wifi_uart_information.wifi_uart_local_port, "       ", 7);
@@ -1173,6 +1241,11 @@ uint8 wifi_uart_init (char *wifi_ssid, char *pass_word, wifi_uart_mode_enum wifi
         if(wifi_uart_get_information())                                         // 模块基本参数获取
         {
             zf_log(0, "get module information failed");
+            return_state = 1;
+            break;
+        }
+        if(wifi_uart_sntp_time_set())                                           // 模块启动sntp服务器
+        {
             return_state = 1;
             break;
         }

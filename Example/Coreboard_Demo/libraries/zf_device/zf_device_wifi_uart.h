@@ -123,6 +123,7 @@ typedef struct
 extern wifi_uart_information_struct wifi_uart_information;
 
 
+uint8   wifi_uart_get_gmt_time              (char* gmt_time);
 uint8   wifi_uart_disconnected_wifi         (void);                                                                         // 断开 WIFI 连接
 uint8   wifi_uart_entry_serianet            (void);                                                                         // 打开透传模式
 uint8   wifi_uart_exit_serianet             (void);                                                                         // 关闭透传模式

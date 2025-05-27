@@ -68,15 +68,15 @@ void key_scanner (void)
     {
         if(KEY_RELEASE_LEVEL != gpio_get_level(key_index[i]))                   // 按键按下
         {
-            key_press_time[i] ++;
-            if(KEY_LONG_PRESS_PERIOD / scanner_period <= key_press_time[i])
+            key_press_time[i] += scanner_period;
+            if(KEY_LONG_PRESS_PERIOD <= key_press_time[i])
             {
                 key_state[i] = KEY_LONG_PRESS;
             }
         }
         else                                                                    // 按键释放
         {
-            if((KEY_LONG_PRESS != key_state[i]) && (KEY_MAX_SHOCK_PERIOD / scanner_period <= key_press_time[i]))
+            if((KEY_LONG_PRESS != key_state[i]) && (KEY_MAX_SHOCK_PERIOD <= key_press_time[i]) && (KEY_LONG_PRESS_PERIOD > key_press_time[i]))
             {
                 key_state[i] = KEY_SHORT_PRESS;
             }

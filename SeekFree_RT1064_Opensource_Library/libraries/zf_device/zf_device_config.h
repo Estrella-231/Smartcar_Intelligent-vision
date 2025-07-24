@@ -43,10 +43,10 @@ unsigned char   mt9v03x_set_config_sccb         (void *soft_iic_obj, short int b
 unsigned char   mt9v03x_set_exposure_time_sccb  (unsigned short int light);
 unsigned char   mt9v03x_set_reg_sccb            (unsigned char addr, unsigned short int data);
 
-unsigned char   scc8660_set_config_sccb         (void *soft_iic_obj, short int buff[11][2]);
+unsigned char   scc8660_set_config_sccb         (void *soft_iic_obj, short int buff[13][2]);
 unsigned char   scc8660_set_brightness_sccb     (unsigned short int brightness);
-unsigned char   scc8660_set_manual_wb_sccb      (unsigned short int manual_wb);
+unsigned char   scc8660_set_manual_wb_sccb      (unsigned short int manual_wb_r, unsigned short int manual_wb_g, unsigned short int manual_wb_b);
 unsigned char   scc8660_set_reg_sccb            (unsigned char reg, unsigned short int data);
-
+unsigned char   scc8660_read_reg_sccb           (unsigned char reg);
 #endif
 

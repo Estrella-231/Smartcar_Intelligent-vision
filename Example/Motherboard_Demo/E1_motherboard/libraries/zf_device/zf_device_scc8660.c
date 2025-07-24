@@ -92,7 +92,15 @@ static int16 scc8660_set_confing_buffer[SCC8660_CONFIG_FINISH][2]=
     {SCC8660_PCLK_MODE,         SCC8660_PCLK_MODE_DEF},                         // PCLK模式
     {SCC8660_COLOR_MODE,        SCC8660_COLOR_MODE_DEF},                        // 图像色彩模式
     {SCC8660_DATA_FORMAT,       SCC8660_DATA_FORMAT_DEF},                       // 输出数据格式
-    {SCC8660_MANUAL_WB,         SCC8660_MANUAL_WB_DEF}                          // 手动白平衡
+#if SCC8660_IS_WB_AUTO
+    {SCC8660_WB_R,              0},                                             // 自动白平衡
+    {SCC8660_WB_G,              0},                                             // 自动白平衡
+    {SCC8660_WB_B,              0},                                             // 自动白平衡
+#else   
+    {SCC8660_WB_R,              SCC8660_MANUAL_WB_R},                           // 自动白平衡
+    {SCC8660_WB_G,              SCC8660_MANUAL_WB_G},                           // 自动白平衡
+    {SCC8660_WB_B,              SCC8660_MANUAL_WB_B},                           // 自动白平衡
+#endif
 };
 
 // 从摄像头内部获取到的配置数据 不允许在这修改参数
@@ -107,7 +115,9 @@ static int16 scc8660_get_confing_buffer[SCC8660_CONFIG_FINISH - 1][2]=
     {SCC8660_PCLK_MODE,         0},                                             // PCLK模式      
     {SCC8660_COLOR_MODE,        0},                                             // 图像色彩模式
     {SCC8660_DATA_FORMAT,       0},                                             // 输出数据格式    
-    {SCC8660_MANUAL_WB,         0},                                             // 白平衡设置
+    {SCC8660_WB_R,              0},                                             // 白平衡设置
+    {SCC8660_WB_G,              0},                                             // 白平衡设置
+    {SCC8660_WB_B,              0},                                             // 白平衡设置
 };
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -128,7 +138,7 @@ static uint8 scc8660_set_config (int16 buff[SCC8660_CONFIG_FINISH][2])
 
     // 设置参数  具体请参看问题锦集手册
     // 开始配置摄像头并重新初始化
-    for(loop_count = SCC8660_MANUAL_WB; loop_count < SCC8660_SET_REG_DATA; loop_count --)
+    for(loop_count = SCC8660_CONFIG_FINISH - 1; loop_count < SCC8660_SET_REG_DATA; loop_count --)
     {
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = buff[loop_count][0];
@@ -176,7 +186,7 @@ static uint8 scc8660_get_config (int16 buff[SCC8660_CONFIG_FINISH-1][2])
     uint32 loop_count = 0;
     uint32 uart_buffer_index = 0;
 
-    for(loop_count = SCC8660_MANUAL_WB - 1; loop_count >= 1; loop_count --)
+    for(loop_count = SCC8660_CONFIG_FINISH - 1; loop_count >= 1; loop_count --)
     {
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = SCC8660_GET_STATUS;
@@ -369,7 +379,7 @@ uint8 scc8660_set_brightness (uint16 data)
 // 使用示例     scc8660_set_white_balance(data);                // 调用该函数前请先初始化摄像头配置串口
 // 备注信息     通过该函数设置的参数，不会被51单片机保存
 //-------------------------------------------------------------------------------------------------------------------
-uint8 scc8660_set_white_balance (uint16 data)
+uint8 scc8660_set_white_balance (uint16 wb_r, uint16 wb_g, uint16 wb_b)
 {
     uint8 return_state = 0;
     
@@ -382,8 +392,8 @@ uint8 scc8660_set_white_balance (uint16 data)
 
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = SCC8660_SET_MANUAL_WB;
-        uart_buffer[2] = data >> 8;
-        uart_buffer[3] = (uint8)data;
+        uart_buffer[2] = 0 >> 8;
+        uart_buffer[3] = (uint8)0x80;
 
         uart_write_buffer(SCC8660_COF_UART, uart_buffer, 4);
 
@@ -398,7 +408,7 @@ uint8 scc8660_set_white_balance (uint16 data)
             }
             system_delay_ms(1);
         }while(SCC8660_INIT_TIMEOUT > timeout_count ++);
-        if((temp != data) || (SCC8660_INIT_TIMEOUT <= timeout_count))
+        if((temp != 0x80) || (SCC8660_INIT_TIMEOUT <= timeout_count))
         {
             return_state = 1;
         }
@@ -406,7 +416,7 @@ uint8 scc8660_set_white_balance (uint16 data)
     }
     else
     {
-        return_state = scc8660_set_manual_wb_sccb(data);
+        return_state = scc8660_set_manual_wb_sccb(wb_r, wb_g, wb_b);
     }
     return return_state;
 }

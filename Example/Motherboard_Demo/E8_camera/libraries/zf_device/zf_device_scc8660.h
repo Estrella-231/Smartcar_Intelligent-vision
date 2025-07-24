@@ -88,8 +88,10 @@
 #define SCC8660_PCLK_MODE_DEF   (0  )                                           // PCLK模式     默认：0         可选参数为：[0,1] 0：不输出消隐信号 1：输出消隐信号 <通常都设置为0，如果使用STM32的DCMI接口采集需要设置为1>
 #define SCC8660_COLOR_MODE_DEF  (0  )                                           // 图像色彩模式 默认：0         可选参数为：[0,1] 0：正常彩色模式   1：鲜艳模式（色彩饱和度提高）
 #define SCC8660_DATA_FORMAT_DEF (1  )                                           // 输出数据格式 默认：0         可选参数为：[0-3] 0：RGB565 1：RGB565(字节交换) 2：YUV422(YUYV) 3：YUV422(UYVY)
-#define SCC8660_MANUAL_WB_DEF   (0  )                                           // 手动白平衡   默认：0         可选参数为：[0,0x65-0xa0] 0：关闭手动白平衡，启用自动白平衡    其他：手动白平衡 手动白平衡时 参数范围0x65-0xa0
-
+#define SCC8660_IS_WB_AUTO      (1  )                                           // 手动白平衡   默认：0         可选参数为：0：关闭手动白平衡，1:启用自动白平衡  
+#define SCC8660_MANUAL_WB_R     (0x5d  )                                           // 手动模式，此参数设置白平衡红色参数，值越大，画面越红， 自动模式，此设置失效
+#define SCC8660_MANUAL_WB_G     (0x40  )                                           // 手动模式，此参数设置白平衡绿色参数，值越大，画面越绿， 自动模式，此设置失效
+#define SCC8660_MANUAL_WB_B     (0x5e  )                                           // 手动模式，此参数设置白平衡蓝色参数，值越大，画面越蓝， 自动模式，此设置失效
 // 摄像头命令枚举
 typedef enum
 {
@@ -103,7 +105,9 @@ typedef enum
     SCC8660_PCLK_MODE,                                                          // 像素时钟模式命令
     SCC8660_COLOR_MODE,                                                         // 色彩模式命令
     SCC8660_DATA_FORMAT,                                                        // 数据格式命令
-    SCC8660_MANUAL_WB,                                                          // 手动白平衡命令
+    SCC8660_WB_R,                                                               // 手动白平衡命令
+    SCC8660_WB_G,                                                               // 手动白平衡命令
+    SCC8660_WB_B,                                                               // 手动白平衡命令
     SCC8660_CONFIG_FINISH,                                                      // 非命令位，主要用来占位计数
         
     SCC8660_GET_WHO_AM_I        = 0xEF,                                         // 我是谁命令，用于判断摄像头型号
@@ -131,7 +135,7 @@ uint16      scc8660_get_id              (void);
 uint16      scc8660_get_parameter       (uint16 config);
 uint16      scc8660_get_version         (void);
 uint8       scc8660_set_brightness      (uint16 data);
-uint8       scc8660_set_white_balance   (uint16 data);
+uint8       scc8660_set_white_balance   (uint16 wb_r, uint16 wb_g, uint16 wb_b);
 uint8       scc8660_set_reg             (uint8 addr, uint16 data);
 
 uint8       scc8660_init                (void);

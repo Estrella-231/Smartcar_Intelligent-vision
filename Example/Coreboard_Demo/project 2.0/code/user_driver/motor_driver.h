@@ -4,39 +4,74 @@
 #include "hardware_config.h"
 #include "robot_param.h"
 
-/************************ 电机硬件配置结构体 ************************/
+/************************ Motor hardware config ************************/
 typedef struct {
-    uint8_t dir_pin;   // 方向引脚编号
-    uint8_t pwm_pin;   // PWM引脚编号
-    bool dir_level;    // 正转电平（true=高电平，false=低电平）
+    gpio_pin_enum dir_pin;
+    pwm_channel_enum pwm_pin;
+    gpio_level_enum dir_level;   // Logic level that means forward for this wheel.
 } Motor_HwConfig_t;
 
-/************************ 电机控制结构体 ************************/
+/************************ Motor control state ************************/
 typedef struct {
-    Motor_HwConfig_t hw;       // 硬件配置
-    int32_t speed_target;      // 目标速度（mm/s）
-    int32_t speed_now;         // 当前速度（mm/s）
-    int32_t speed_last;        // 之前速度
-    int32_t pos_target;        // 目标位置（脉冲）
-    int32_t pos_now;           // 当前位置（脉冲）
-    int32_t pos_last;          // 之前位置
-    int32_t pwm_out;           // 实际输出PWM值
+    Motor_HwConfig_t hw;
+    int32_t speed_target;
+    int32_t speed_now;
+    int32_t speed_last;
+    int32_t pos_target;
+    int32_t pos_now;
+    int32_t pos_last;
+    int32_t pwm_out;             // Signed PWM command.
 } Motor_Control_t;
 
-/************************ 全局变量声明 ************************/
-extern Motor_Control_t g_motor[MOTOR_MAX];
+/************************ Vehicle control state ************************/
+typedef struct {
+    int32_t speed_target;
+    int32_t speed_now;
+    int32_t angle_target;
+    int32_t angle_now;
+    int32_t x_target;
+    int32_t y_target;
+    int32_t x_now;
+    int32_t y_now;
+} Car_Control_t;
 
-/************************ 函数声明 ************************/
-void motor_driver_init(void);                                        // 电机驱动初始化（所有电机）
-void motor_hw_init(MotorID motor_id);                                // 单个电机硬件初始化
-void motor_set_pwm(MotorID motor_id, int32_t pwm);                   // 设置电机PWM
-void motor_stop(MotorID motor_id);                                   // 停止某一电机
-void motor_stop_all(void);                                           // 停止所有电机
-int32_t get_pos_now(MotorID motor_id);                               // 获取电机的当前位置
-void change_pos_now(MotorID motor_id, int32_t position);             // 更改电机的当前位置
-void change_speed_target(MotorID motor_id, int32_t speed);           // 更改电机的目标位置
-int32_t get_speed_now(MotorID motor_id);                             // 获取电机的当前速度
-void change_pos_now(MotorID motor_id, int32_t speed);                // 更改电机的当前速度
-void change_speed_target(MotorID motor_id, int32_t speed);           // 更改电机的目标位置
+/************************ Globals ************************/
+extern Motor_Control_t g_motor[MOTOR_MAX];
+extern Car_Control_t g_car;
+
+/************************ API ************************/
+void motor_driver_init(void);
+void motor_hw_init(MotorID motor_id);
+void motor_set_direction(MotorID motor_id, bool forward);
+void motor_set_pwm(MotorID motor_id, int32_t pwm);
+void motor_set_pwm_all(void);
+void motor_stop(MotorID motor_id);
+void motor_stop_all(void);
+int32_t get_pos_now(MotorID motor_id);
+void change_pos_now(MotorID motor_id, int32_t position);
+void change_pos_target(MotorID motor_id, int32_t position);
+int32_t get_speed_now(MotorID motor_id);
+void change_speed_now(MotorID motor_id, int32_t speed);
+void change_speed_target(MotorID motor_id, int32_t speed);
+int32_t get_speed_target(MotorID motor_id);
+int32_t get_pos_target(MotorID motor_id);
+
+/*
+ * Car-level state accessors.
+ *
+ * The project still stores the aggregate vehicle state in the global g_car
+ * struct. These helpers provide a narrow API for other modules so they can stop
+ * reaching into g_car fields directly one by one.
+ */
+int32_t car_get_speed_now(void);
+void car_set_speed_now(int32_t speed);
+int32_t car_get_angle_now(void);
+void car_set_angle_now(int32_t angle);
+int32_t car_get_x_now(void);
+int32_t car_get_y_now(void);
+void car_set_position_now(int32_t x, int32_t y);
+int32_t car_get_x_target(void);
+int32_t car_get_y_target(void);
+void car_set_position_target(int32_t x, int32_t y);
 
 #endif // MOTOR_DRIVER_H

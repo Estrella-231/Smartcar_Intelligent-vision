@@ -23,7 +23,7 @@ void BlueTooth_Init(void)
 /* @brief 发送文档数据
    状态、x坐标、y坐标、角度、速度、编码器1、编码器2、编码器3、编码器4
     */	
-void send_data(int State, int32_t Pos_X, int32_t Pos_Y, 
+void send_txt_data(int State, int32_t Pos_X, int32_t Pos_Y, 
                int32_t Angle, int32_t Speed, 
                int16_t Encoder0, int16_t Encoder1, int16_t Encoder2, int16_t Encoder3)
 {
@@ -70,3 +70,27 @@ void send_wheel_data(int16_t Encoder0, int32_t speed0, int32_t position0,
         );
     ble6a20_send_string(data_buffer);
 }
+
+
+void send_imu_data(void)
+{
+    memset(data_buffer, 0, sizeof(data_buffer));			
+    snprintf(data_buffer, sizeof(data_buffer),                                   
+        "acc data: x=%5d, y=%5d, z=%5d\r\n"
+        "gyro data:  x=%5d, y=%5d, z=%5d\r\n"				
+        "mag data: x=%5d, y=%5d, z=%5d\r\n",				
+        imu963ra_acc_x, imu963ra_acc_y, imu963ra_acc_z,
+        imu963ra_gyro_x, imu963ra_gyro_y, imu963ra_gyro_z,				
+        imu963ra_mag_x, imu963ra_mag_y, imu963ra_mag_z); 			
+    ble6a20_send_string(data_buffer);
+}
+
+
+void send_data(int32_t a, int32_t b, int32_t c, int32_t d){
+    memset(data_buffer, 0, sizeof(data_buffer));
+    snprintf(data_buffer, sizeof(data_buffer),
+        "%d,   %d   ,%d,   %d\r\n",
+         a, b, c, d);
+    ble6a20_send_string(data_buffer);
+}
+

@@ -20,6 +20,8 @@ void PIT_IRQHandler(void)
     
     if(pit_flag_get(PIT_CH1))
     {
+        void pit1_handler (void);
+        pit1_handler();
         pit_flag_clear(PIT_CH1);
     }
     
@@ -301,6 +303,5 @@ PWM4_3_IRQHandler
 PWM4_FAULT_IRQHandler
 Reserved171_IRQHandler
 GPIO6_7_8_9_IRQHandler*/
-
 
 

@@ -2,67 +2,63 @@
 #define ANGLE_PID_H
 
 #include "motor_driver.h"
-
+#include "math_tools.h"
+#include "gyroscope.h"
 
 typedef struct {
-    int32_t kp;           // 比例系数
-    int32_t ki;           // 积分系数
-    int32_t kd;           // 微分系数
-    int32_t integral;     // 积分项
-    int32_t last_error;   // 上一次误差
-} MecanumPID_t;
+    int32_t integral;
+    int32_t target;
+    int32_t feedback;
+    int32_t err;
+    int32_t last_error;
+    int32_t last_output;
+    int32_t output;
+} ROTATEPID_t;
 
+typedef enum {
+    ROT_STATE_IDLE = 0,
+    ROT_STATE_RUNNING = 1,
+    ROT_STATE_STABLE = 2,
+    ROT_STATE_FINISHED = 3
+} Rotate_State_Type;
 
+extern Rotate_State_Type g_rot_state;
+extern ROTATEPID_t g_rotate;
+extern ROTATEPID_t g_angle;
 
+/*
+ * Business-layer helper wrappers.
+ */
+void angle_pid_set_target(int32_t angle);
+void angle_pid_reset_state(void);
 
-static int32_t Mecanum_PIDCalc(MecanumPID_t *pid, int32_t target, int32_t current) {
-    if (pid == NULL) return 0;
-    
-    // 1. 计算误差
-    int32_t error = target - current;
-    
-    // 2. 死区过滤（零漂阈值）
-    if (abs(error) <= SPEED_ZERO_OFFSET) {
-        pid->integral = 0;
-        pid->last_error = 0;
-        return 0;
-    }
-    
-    // 3. 积分项计算（限幅避免饱和）
-    pid->integral += error * PID_CONTROL_PERIOD; // 积分=误差×周期（10ms）
-    if (pid->integral > pid->max_output * 10 / pid->ki) { // 放大系数补偿
-        pid->integral = pid->max_output * 10 / pid->ki;
-    } else if (pid->integral < pid->min_output * 10 / pid->ki) {
-        pid->integral = pid->min_output * 10 / pid->ki;
-    }
-    
-    // 4. PID输出计算（参数放大10倍，最终除以10恢复）
-    int32_t output = (pid->kp * error + pid->ki * pid->integral + 
-                      pid->kd * (error - pid->last_error)) / 10;
-    
-    // 5. 输出限幅
-    output = (output > pid->max_output) ? pid->max_output : output;
-    output = (output < pid->min_output) ? pid->min_output : output;
-    
-    // 6. 更新上一次误差
-    pid->last_error = error;
-    
-    return output;
-}
+/*
+ * Task 9 outer-loop helper.
+ *
+ * Input/return unit:
+ * - target_angle_cd  : 0.01 degree
+ * - current_angle_cd : 0.01 degree
+ * - return value     : yaw-correction command used as Vz contribution
+ *
+ * This function keeps the angle-loop state in g_angle while exposing a clean
+ * interface to the caller.
+ */
+int32_t angle_pid_calc_output(int32_t target_angle_cd,
+                              int32_t current_angle_cd,
+                              uint32_t period_ms);
 
+/*
+ * Read-only helpers for debug output and upper-layer inspection.
+ */
+int32_t angle_pid_get_error(void);
+int32_t angle_pid_get_output(void);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+/*
+ * Legacy interfaces kept for the existing rotation-only code path.
+ */
+void angle_pid_calc(void);
+void rotate_pid_calc(void);
+void Rotate_PWM_Calc(void);
+int32_t Rotate_Finish_Judge(int32_t target_angle, int32_t curr_angle, int32_t curr_gyro);
 
 #endif

@@ -1,83 +1,62 @@
 #include "robot_control.h"
 
-// 全局变量定义
-Vehicle_Control_t g_vehicle_ctrl = {0};
-int32_t g_adaptive_max_speed = SPEED_MAX_LIMIT;
-int32_t g_current_speed = 0;
+#include "angle_pid.h"
+#include "bluetooth.h"
+#include "gyroscope.h"
+#include "motor_driver.h"
 
-/**
- * @brief 机器人控制系统初始化
+/*
+ * Current business-layer rotation wrapper.
+ *
+ * This function is intentionally kept small. It orchestrates the already
+ * existing angle/gyro/PWM logic but leaves the low-level controller details in
+ * the PID and driver modules. Moving the heavy dependencies into this .c file
+ * keeps robot_control.h from leaking the whole stack to any unrelated module
+ * that only wants to call Control_Rotate().
  */
-void robot_control_init(void)
+void Control_Rotate(int32_t angle)
 {
-    // 初始化底层驱动
-    motor_driver_init();
-    Encoder_Init();
-    speed_pid_init();
-    pos_pid_init();
-    
-    // 初始化整车控制参数
-    g_vehicle_ctrl.count_time = 0;
-    g_vehicle_ctrl.global_speed = SPEED_MAX_LIMIT;
-    g_vehicle_ctrl.enable_closed_loop = true;
-    g_vehicle_ctrl.current_dir = MOVE_STOP;
-    g_vehicle_ctrl.move_state = MOVE_STATE_IDLE;
-    
-    // 初始化全局速度参数
-    g_adaptive_max_speed = SPEED_MAX_LIMIT;
-    g_current_speed = 0;
-    
-    // 停止所有电机
-    mecanum_stop();
-}
+    static uint8_t finish_cnt = 0;
 
-/**
- * @brief 机器人控制主循环（10ms调用一次）
- */
-void robot_control_loop(void)
-{
-    // 更新全局计时器
-    g_vehicle_ctrl.count_time += PID_CONTROL_PERIOD;
-    
-    // 计算整车位置
-    calc_vehicle_position();
-    
-    // 检查是否到达位置目标
-    if(g_vehicle_ctrl.move_state == MOVE_STATE_RUNNING && check_pos_arrived())
+    /*
+     * The finish judge belongs to the algorithm layer, but the decision of
+     * "what to do once rotation is considered finished" belongs to the business
+     * layer. That is why the wrapper checks the state and then performs stop /
+     * reset actions here.
+     */
+    int32_t state = Rotate_Finish_Judge(angle, imu_get_yaw_cd(), imu_get_gyro_z_cdps());
+
+    if(state == ROT_STATE_FINISHED)
     {
-        mecanum_stop();
-        g_vehicle_ctrl.move_state = MOVE_STATE_FINISH;
-        return;
-    }
-    
-    // 闭环控制计算
-    if(g_vehicle_ctrl.enable_closed_loop)
-    {
-        // 位置环计算（生成速度目标）
-        for(int i = 0; i < MOTOR_MAX; i++)
+        finish_cnt++;
+        if(finish_cnt >= 3)
         {
-            pos_pid_calc((MotorID)i);
-        }
-        
-        // 速度环计算（生成PWM输出）
-        for(int i = 0; i < MOTOR_MAX; i++)
-        {
-            int32_t pwm = speed_pid_calc((MotorID)i);
-            motor_set_pwm((MotorID)i, abs(pwm));
+            motor_stop_all();
+            send_data(0, 6, 6, 0);
+
+            /*
+             * Clear controller history when the action is complete. Otherwise
+             * the next rotation command can inherit stale integral and derivative
+             * state from the previous maneuver.
+             */
+            angle_pid_reset_state();
         }
     }
+    else
+    {
+        finish_cnt = 0;
+        angle_pid_set_target(angle);
+
+        /*
+         * The actual closed-loop calls are still commented out in the current
+         * project stage because task 9 has not started yet. Keep this wrapper in
+         * place so later enabling the full chain only requires restoring those
+         * calls here rather than re-spreading control logic across modules.
+         */
+//        angle_pid_calc();
+//        system_delay_ms(10);
+//        rotate_pid_calc();
+//        system_delay_ms(10);
+//        Rotate_PWM_Calc();
+    }
 }
-
-/**
- * @brief 紧急停止
- */
-void robot_emergency_stop(void)
-{
-    mecanum_stop();
-    g_vehicle_ctrl.move_state = MOVE_STATE_IDLE;
-    g_vehicle_ctrl.current_dir = MOVE_STOP;
-    g_current_speed = 0;
-}
-
-
-// 将车头转向前进方向

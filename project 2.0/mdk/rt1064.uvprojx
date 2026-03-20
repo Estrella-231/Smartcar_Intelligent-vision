@@ -10,7 +10,7 @@
       <TargetName>nor_sdram_zf_dtcm</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6160000::V6.16::ARMCLANG</pCCUsed>
+      <pCCUsed>6240000::V6.24::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -465,16 +465,6 @@
               <FilePath>..\code\user_business\state_machine.c</FilePath>
             </File>
             <File>
-              <FileName>robot_config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\code\user_config\robot_config.c</FilePath>
-            </File>
-            <File>
-              <FileName>vision_config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\code\user_config\vision_config.c</FilePath>
-            </File>
-            <File>
               <FileName>bluetooth.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\code\user_driver\bluetooth.c</FilePath>
@@ -508,6 +498,11 @@
               <FileName>math_tools.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\code\user_utils\math_tools.c</FilePath>
+            </File>
+            <File>
+              <FileName>angle_pid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\uer_algorithm\pid\angle_pid.c</FilePath>
             </File>
           </Files>
         </Group>

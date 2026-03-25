@@ -20,6 +20,11 @@ typedef struct {
     MoveState move_state;
 } Odometry_State_t;
 
+typedef enum {
+    POINT_MOVE_PROFILE_WALK = 0,
+    POINT_MOVE_PROFILE_PUSH = 1
+} PointMoveProfile_t;
+
 extern Odometry_State_t g_odometry;
 
 /*
@@ -41,6 +46,7 @@ void odometry_update(uint32_t period_ms);
  * Heading hold is still handled by the separate yaw outer loop.
  */
 void odometry_set_target_point(int32_t target_x_mm, int32_t target_y_mm);
+void odometry_set_point_move_profile(PointMoveProfile_t profile);
 MoveState odometry_update_point_move_command(int32_t *vx_cmd_mmps,
                                              int32_t *vy_cmd_mmps);
 

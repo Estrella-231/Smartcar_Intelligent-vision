@@ -72,14 +72,55 @@
 #define MAP_WIDTH                (500)
 #define MAP_LENGTH               (500)
 
+/************************ Field / grid execution ************************/
+// Competition field size: 3.2 m x 2.4 m, mapped to a 16 x 12 virtual grid.
+#define FIELD_WIDTH_MM                   (3200)
+#define FIELD_HEIGHT_MM                  (2400)
+#define FIELD_GRID_COLS                  (16)
+#define FIELD_GRID_ROWS                  (12)
+#define FIELD_GRID_CELL_MM               (200)
+
+// Motion execution scheduler timing and heading policy.
+#define EXEC_CONTROL_PERIOD_MS           (20)
+#define EXEC_YAW_TARGET_CD               (0)
+#define EXEC_YAW_VZ_LIMIT                (70)
+
+// When the chassis is already close enough to a segment target, let the
+// scheduler accept that segment and move on instead of waiting for the point
+// controller to fight over the last few centimeters.
+#define EXEC_SEGMENT_ACCEPT_TOL_MM       (100)
+
+// Because the team does not yet have a dedicated start trigger fixture, keep a
+// software auto-start path enabled for bench testing. A future start button or
+// referee signal should call motion_exec_request_start() instead of relying on
+// this test macro.
+#define EXEC_AUTO_START_FOR_TEST         (1)
+
+// Motion-segment wait handling.
+#define EXEC_WAIT_SEGMENT_DEFAULT_MS     (300)
+
+// Push segments reuse the same point-move controller but with lower speed caps.
+#define POINT_MOVE_PUSH_SPEED_SCALE_PCT       (70)
+#define POINT_MOVE_PUSH_MIN_EFFECTIVE_MMPS    (180)
+
 /************************ Round-2 odometry ************************/
 // Scale factors used after field calibration. Leave at 1.0 until measured.
 #define ODOM_SCALE_X                     (0.940f)
 #define ODOM_SCALE_Y                     (0.977f)
 
-// Default start point in the global frame.
-#define ODOM_START_X_MM                  (0)
-#define ODOM_START_Y_MM                  (0)
+// Default start cell on the virtual 16 x 12 map.
+//
+// Team convention for the execution stage:
+// - the car starts from grid (1, 6)
+// - odometry should therefore boot at the physical center of that cell
+//
+// Physical center conversion:
+// x_mm = grid_x * 200 + 100
+// y_mm = grid_y * 200 + 100
+#define ODOM_START_GRID_X                (1)
+#define ODOM_START_GRID_Y                (6)
+#define ODOM_START_X_MM                  (ODOM_START_GRID_X * FIELD_GRID_CELL_MM + FIELD_GRID_CELL_MM / 2)
+#define ODOM_START_Y_MM                  (ODOM_START_GRID_Y * FIELD_GRID_CELL_MM + FIELD_GRID_CELL_MM / 2)
 
 // Small body/global velocity values are treated as zero to suppress noise.
 #define ODOM_BODY_SPEED_DEADBAND_MMPS    (15)
@@ -102,12 +143,12 @@
 
 // When a move axis is still far from the target, keep the command above the
 // low-speed dead region of the current chassis.
-#define POINT_MOVE_MIN_EFFECTIVE_MMPS    (260)
+#define POINT_MOVE_MIN_EFFECTIVE_MMPS    (280)
 
 // Once the dominant axis enters the near-target zone, switch to a softer
 // convergence mode so the chassis can settle instead of weaving.
-#define POINT_MOVE_NEAR_SLOWDOWN_MM      (300)
-#define POINT_MOVE_NEAR_MAX_SPEED_MMPS   (140)
+#define POINT_MOVE_NEAR_SLOWDOWN_MM      (160)
+#define POINT_MOVE_NEAR_MAX_SPEED_MMPS   (220)
 
 // If one axis error is below this threshold, that axis command becomes zero.
 #define POINT_MOVE_AXIS_STOP_TOL_MM      (25)
@@ -115,7 +156,7 @@
 // Full move completion is judged with a slightly looser tolerance than the
 // per-axis command deadband. This avoids endless small correction attempts when
 // the chassis is already close enough for the current hardware stage.
-#define POINT_MOVE_FINISH_TOL_MM         (55)
+#define POINT_MOVE_FINISH_TOL_MM         (70)
 
 // If one axis is much smaller than the dominant move axis, suppress that small
 // cross-axis correction until the dominant axis is nearly settled.
@@ -123,11 +164,11 @@
 
 // Limit how much the planner can change one axis command per control cycle.
 // This directly reduces left-right twitch near the target.
-#define POINT_MOVE_CMD_STEP_MMPS         (40)
+#define POINT_MOVE_CMD_STEP_MMPS         (60)
 
 // Full point move is finished only after both axes stay inside tolerance for
 // several control cycles in a row.
-#define POINT_MOVE_STABLE_COUNT          (3)
+#define POINT_MOVE_STABLE_COUNT          (2)
 
 /************************ Enum types ************************/
 typedef enum {

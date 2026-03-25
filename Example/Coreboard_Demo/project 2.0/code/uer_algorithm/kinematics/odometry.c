@@ -12,6 +12,7 @@ static int32_t g_last_vy_body_mmps = 0;
 static uint8_t g_point_move_stable_count = 0;
 static int32_t g_last_vx_point_cmd_mmps = 0;
 static int32_t g_last_vy_point_cmd_mmps = 0;
+static PointMoveProfile_t g_point_move_profile = POINT_MOVE_PROFILE_WALK;
 
 static int32_t odometry_limit_velocity_step(int32_t current_value, int32_t last_value)
 {
@@ -105,10 +106,27 @@ static int32_t odometry_axis_error_to_cmd_mmps(int32_t axis_error_mm)
 {
     int32_t axis_cmd_mmps;
     int32_t abs_error_mm = abs(axis_error_mm);
+    int32_t max_speed_mmps = POINT_MOVE_MAX_SPEED_MMPS;
+    int32_t min_effective_mmps = POINT_MOVE_MIN_EFFECTIVE_MMPS;
+    int32_t near_max_speed_mmps = POINT_MOVE_NEAR_MAX_SPEED_MMPS;
 
     if(abs_error_mm <= POINT_MOVE_AXIS_STOP_TOL_MM)
     {
         return 0;
+    }
+
+    /*
+     * Push segments should move more conservatively than free walk segments.
+     * The state machine switches the profile before starting each segment, so
+     * the exact same point-move logic can serve both without duplicating the
+     * controller.
+     */
+    if(POINT_MOVE_PROFILE_PUSH == g_point_move_profile)
+    {
+        max_speed_mmps = (POINT_MOVE_MAX_SPEED_MMPS * POINT_MOVE_PUSH_SPEED_SCALE_PCT) / 100;
+        near_max_speed_mmps =
+            (POINT_MOVE_NEAR_MAX_SPEED_MMPS * POINT_MOVE_PUSH_SPEED_SCALE_PCT) / 100;
+        min_effective_mmps = POINT_MOVE_PUSH_MIN_EFFECTIVE_MMPS;
     }
 
     axis_cmd_mmps = (int32_t)((float)axis_error_mm * POINT_MOVE_KP);
@@ -121,7 +139,7 @@ static int32_t odometry_axis_error_to_cmd_mmps(int32_t axis_error_mm)
      */
     if(abs_error_mm > POINT_MOVE_NEAR_SLOWDOWN_MM)
     {
-        axis_cmd_mmps = LIMIT_ABS(axis_cmd_mmps, POINT_MOVE_MAX_SPEED_MMPS);
+        axis_cmd_mmps = LIMIT_ABS(axis_cmd_mmps, max_speed_mmps);
 
         /*
          * Keep the command out of the known low-speed ineffective region.
@@ -132,18 +150,18 @@ static int32_t odometry_axis_error_to_cmd_mmps(int32_t axis_error_mm)
          * - if point-move commands become too small, the real motion becomes
          *   sticky, uneven, and prone to twitch
          */
-        if(axis_cmd_mmps > 0 && axis_cmd_mmps < POINT_MOVE_MIN_EFFECTIVE_MMPS)
+        if(axis_cmd_mmps > 0 && axis_cmd_mmps < min_effective_mmps)
         {
-            axis_cmd_mmps = POINT_MOVE_MIN_EFFECTIVE_MMPS;
+            axis_cmd_mmps = min_effective_mmps;
         }
-        else if(axis_cmd_mmps < 0 && axis_cmd_mmps > -POINT_MOVE_MIN_EFFECTIVE_MMPS)
+        else if(axis_cmd_mmps < 0 && axis_cmd_mmps > -min_effective_mmps)
         {
-            axis_cmd_mmps = -POINT_MOVE_MIN_EFFECTIVE_MMPS;
+            axis_cmd_mmps = -min_effective_mmps;
         }
     }
     else
     {
-        axis_cmd_mmps = LIMIT_ABS(axis_cmd_mmps, POINT_MOVE_NEAR_MAX_SPEED_MMPS);
+        axis_cmd_mmps = LIMIT_ABS(axis_cmd_mmps, near_max_speed_mmps);
     }
 
     return axis_cmd_mmps;
@@ -176,6 +194,7 @@ void odometry_reset_pose(int32_t start_x_mm, int32_t start_y_mm)
     g_point_move_stable_count = 0;
     g_last_vx_point_cmd_mmps = 0;
     g_last_vy_point_cmd_mmps = 0;
+    g_point_move_profile = POINT_MOVE_PROFILE_WALK;
 
     car_set_position_now(start_x_mm, start_y_mm);
     car_set_position_target(start_x_mm, start_y_mm);
@@ -302,6 +321,19 @@ void odometry_set_target_point(int32_t target_x_mm, int32_t target_y_mm)
     g_last_vx_point_cmd_mmps = 0;
     g_last_vy_point_cmd_mmps = 0;
     car_set_position_target(target_x_mm, target_y_mm);
+}
+
+/*
+ * Select the point-move profile used by subsequent odometry_update_point_move_command()
+ * calls.
+ *
+ * The execution scheduler sets this before each segment:
+ * - WALK: normal free translation
+ * - PUSH: lower-speed translation while pushing a box
+ */
+void odometry_set_point_move_profile(PointMoveProfile_t profile)
+{
+    g_point_move_profile = profile;
 }
 
 /*

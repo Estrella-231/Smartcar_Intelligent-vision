@@ -1,6 +1,7 @@
 #include "zf_common_headfile.h"
 #include "zf_common_debug.h"
 #include "isr.h"
+#include "state_machine.h"
 
 
 void CSI_IRQHandler(void)
@@ -78,9 +79,7 @@ void LPUART4_IRQHandler(void)
     if(kLPUART_RxDataRegFullFlag & LPUART_GetStatusFlags(LPUART4))
     {
         // �����ж� 
-        flexio_camera_uart_handler();
-        
-        gnss_uart_callback();
+        openart_uart_rx_handler();
     }
         
     LPUART_ClearStatusFlags(LPUART4, kLPUART_RxOverrunFlag);    // ������ɾ��
@@ -303,5 +302,4 @@ PWM4_3_IRQHandler
 PWM4_FAULT_IRQHandler
 Reserved171_IRQHandler
 GPIO6_7_8_9_IRQHandler*/
-
 

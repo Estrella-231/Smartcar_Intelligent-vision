@@ -153,6 +153,21 @@ int32_t speed_pid_calc(MotorID motor_id,
         pwm_command = (g_speed_pid[motor_id].err > 0) ? SPEED_DEAD_ZONE : -SPEED_DEAD_ZONE;
     }
 
+    /*
+     * Do not force a per-wheel anti-stall floor here.
+     *
+     * We tried that approach during ground testing, but it made the four wheels
+     * react differently when one wheel momentarily lagged. The result was
+     * diagonal drift and chassis sway.
+     *
+     * Ground anti-stall is now handled at the higher execution layer by:
+     * - keeping a moderate chassis-level minimum move speed
+     * - accepting a segment once the car is close enough to the blue target point
+     *
+     * That keeps all four wheels on the same chassis command instead of letting
+     * one wheel get an extra private boost.
+     */
+
     g_speed_pid[motor_id].output = pwm_adjust;
     g_speed_pid[motor_id].last_error = g_speed_pid[motor_id].err;
     g_speed_pid[motor_id].last_output = pwm_command;

@@ -94,3 +94,47 @@ void send_data(int32_t a, int32_t b, int32_t c, int32_t d){
     ble6a20_send_string(data_buffer);
 }
 
+/*
+ * Print one full OpenART map frame over BLE in human-readable text form.
+ *
+ * Output format:
+ * - one summary line with counters and player position
+ * - twelve map rows in row-major order
+ *
+ * The summary line helps correlate a printed map with the compact four-number
+ * telemetry that is still sent in the main loop.
+ */
+void send_openart_map_debug(const char map[OPENART_MAP_HEIGHT][OPENART_MAP_WIDTH],
+                            int32_t player_x,
+                            int32_t player_y,
+                            int32_t valid_count,
+                            int32_t invalid_count,
+                            int32_t parse_error_count)
+{
+    char line_buffer[64];
+
+    memset(line_buffer, 0, sizeof(line_buffer));
+    snprintf(line_buffer, sizeof(line_buffer),
+             "OA map cnt=%ld inv=%ld err=%ld p=(%ld,%ld)\r\n",
+             (long)valid_count,
+             (long)invalid_count,
+             (long)parse_error_count,
+             (long)player_x,
+             (long)player_y);
+    ble6a20_send_string(line_buffer);
+
+    for(uint32_t row = 0; row < OPENART_MAP_HEIGHT; row++)
+    {
+        /*
+         * Each row holds 16 ASCII cells. Copy exactly 16 bytes, then append
+         * CRLF so the host terminal renders the map as a clean 12-line grid.
+         */
+        memset(line_buffer, 0, sizeof(line_buffer));
+        memcpy(line_buffer, map[row], OPENART_MAP_WIDTH);
+        line_buffer[OPENART_MAP_WIDTH] = '\r';
+        line_buffer[OPENART_MAP_WIDTH + 1] = '\n';
+        line_buffer[OPENART_MAP_WIDTH + 2] = '\0';
+        ble6a20_send_string(line_buffer);
+    }
+}
+

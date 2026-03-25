@@ -340,7 +340,7 @@
               <MiscControls>-fno-common  -fdata-sections  -ffreestanding  -fno-builtin  -mthumb -Wno-invalid-source-encoding</MiscControls>
               <Define>CPU_MIMXRT1064DVL6A,SKIP_SYSCLK_INIT,XIP_EXTERNAL_FLASH=1, XIP_BOOT_HEADER_DCD_ENABLE =1, XIP_BOOT_HEADER_ENABLE =1,PRINTF_FLOAT_ENABLE=1, SCANF_FLOAT_ENABLE=1, PRINTF_ADVANCED_ENABLE=1, SCANF_ADVANCED_ENABLE=1, FSL_DRIVER_TRANSFER_DOUBLE_WEAK_IRQ=0, USB_STACK_BM, DEBUG, MCUXPRESSO_SDK, SD_ENABLED</Define>
               <Undefine></Undefine>
-              <IncludePath>..\user\inc;..\..\libraries\sdk\startup\mdk;..\..\libraries\sdk\deceive;..\..\libraries\sdk\drives;..\..\libraries\sdk\xip;..\..\libraries\sdk\utilities;..\..\libraries\sdk\utilities\debug_console;..\..\libraries\sdk\utilities\str;..\..\libraries\sdk\cmsis_drivers;..\..\libraries\sdk\CMSIS\Include;..\..\libraries\sdk\CMSIS\Driver\Include;..\..\libraries\sdk\components\lists;..\..\libraries\sdk\components\osa;..\..\libraries\sdk\components\serial_manager;..\..\libraries\sdk\components\uart;..\..\libraries\sdk\board;..\..\libraries\components\fatfs\source;..\..\libraries\components\fatfs\source\fsl_sd_disk;..\..\libraries\components\sdmmc;..\..\libraries\components\sdmmc\common;..\..\libraries\components\sdmmc\host\usdhc;..\..\libraries\components\sdmmc\osa;..\..\libraries\components\sdmmc\sd;..\..\libraries\components\usb\device;..\..\libraries\components\usb\include;..\..\libraries\components\usb\phy;..\..\libraries\components\usb\usb_cdc_adapter;..\..\libraries\zf_common;..\..\libraries\zf_driver;..\..\libraries\zf_device;..\..\libraries\zf_components;..\code;..\code\user_business;..\code\user_config;..\code\user_driver;..\code\user_utils;..\code\uer_algorithm\pid;..\code\uer_algorithm\kinematics;..\code\uer_algorithm\path;..\code\uer_algorithm\vision</IncludePath>
+              <IncludePath>..\user\inc;..\..\libraries\sdk\startup\mdk;..\..\libraries\sdk\deceive;..\..\libraries\sdk\drives;..\..\libraries\sdk\xip;..\..\libraries\sdk\utilities;..\..\libraries\sdk\utilities\debug_console;..\..\libraries\sdk\utilities\str;..\..\libraries\sdk\cmsis_drivers;..\..\libraries\sdk\CMSIS\Include;..\..\libraries\sdk\CMSIS\Driver\Include;..\..\libraries\sdk\components\lists;..\..\libraries\sdk\components\osa;..\..\libraries\sdk\components\serial_manager;..\..\libraries\sdk\components\uart;..\..\libraries\sdk\board;..\..\libraries\components\fatfs\source;..\..\libraries\components\fatfs\source\fsl_sd_disk;..\..\libraries\components\sdmmc;..\..\libraries\components\sdmmc\common;..\..\libraries\components\sdmmc\host\usdhc;..\..\libraries\components\sdmmc\osa;..\..\libraries\components\sdmmc\sd;..\..\libraries\components\usb\device;..\..\libraries\components\usb\include;..\..\libraries\components\usb\phy;..\..\libraries\components\usb\usb_cdc_adapter;..\..\libraries\zf_common;..\..\libraries\zf_driver;..\..\libraries\zf_device;..\..\libraries\zf_components;..\code;..\code\user_business;..\code\user_config;..\code\user_driver;..\code\user_utils;..\code\uer_algorithm\pid;..\code\uer_algorithm\kinematics;..\code\uer_algorithm\path;..\code\uer_algorithm\vision;..\code\BFS</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -503,6 +503,56 @@
               <FileName>angle_pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\code\uer_algorithm\pid\angle_pid.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_deadlock.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_deadlock.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_map.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_map.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_motion_adapter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_motion_adapter.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_push_bfs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_push_bfs.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_replay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_replay.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_stage1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_stage1.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_stage2.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_stage2.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_stage3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_stage3.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_utils.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_utils.c</FilePath>
+            </File>
+            <File>
+              <FileName>soko_walk_bfs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\BFS\soko_walk_bfs.c</FilePath>
             </File>
           </Files>
         </Group>

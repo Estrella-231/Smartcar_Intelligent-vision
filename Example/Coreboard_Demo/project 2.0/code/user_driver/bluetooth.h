@@ -4,6 +4,7 @@
 #include "zf_common_headfile.h"
 #include "hardware_config.h"
 #include "robot_param.h"
+#include "vision_config.h"
 
 void BlueTooth_Init(void);               // 蓝牙初始化
 void send_wheel_data(int16_t Encoder0, int32_t speed0, int32_t position0, 
@@ -19,6 +20,12 @@ void send_txt_data(int State, int32_t Pos_X, int32_t Pos_Y,
 void send_imu_data(void);
 
 void send_data(int32_t a, int32_t b, int32_t c, int32_t d);
+void send_openart_map_debug(const char map[OPENART_MAP_HEIGHT][OPENART_MAP_WIDTH],
+                            int32_t player_x,
+                            int32_t player_y,
+                            int32_t valid_count,
+                            int32_t invalid_count,
+                            int32_t parse_error_count);
 
 
 

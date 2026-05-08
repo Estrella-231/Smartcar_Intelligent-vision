@@ -1,0 +1,421 @@
+智能车代码接口分析报告
+======================================================================
+
+一、漏声明的接口（.c中定义了，但.h中没有声明）
+----------------------------------------------------------------------
+  [1] int32_t speed2pwm(int32_t speed)
+       位置: code\user_utils\math_tools.c
+
+二、已声明但无外部调用的接口（.h中声明、.c中定义，但其他.c文件未调用）
+   说明：以下函数虽然在.h中暴露为公共接口，但实际只在自己的.c文件内部使用，
+         或完全未被调用。可考虑改为static，或作为遗留代码清理。
+----------------------------------------------------------------------
+  模块: code\BFS
+    [1] SokoStatus soko_bfs_push_bomb_to_wall(const GameMap *map,
+									  Point player_start,
+									  Point bomb_start,
+									  Point wall_target,
+									  SolveResult *out_result)
+         声明: code\BFS\soko_stage3.h
+         定义: code\BFS\soko_stage3.c
+    [2] int8_t soko_dir_dx(Dir dir)
+         声明: code\BFS\soko_utils.h
+         定义: code\BFS\soko_utils.c
+    [3] int8_t soko_dir_dy(Dir dir)
+         声明: code\BFS\soko_utils.h
+         定义: code\BFS\soko_utils.c
+    [4] void soko_map_clear(GameMap *map)
+         声明: code\BFS\soko_map.h
+         定义: code\BFS\soko_map.c
+    [5] int8_t soko_map_get_target_number(const GameMap *map, Point pos)
+         声明: code\BFS\soko_map.h
+         定义: code\BFS\soko_map.c
+    [6] SokoStatus soko_motion_plan_push(MotionPlan *plan, MotionSegment segment)
+         声明: code\BFS\soko_motion_adapter.h
+         定义: code\BFS\soko_motion_adapter.c
+    [7] void soko_motion_plan_reset(MotionPlan *plan)
+         声明: code\BFS\soko_motion_adapter.h
+         定义: code\BFS\soko_motion_adapter.c
+    [8] SokoStatus soko_replay_apply_action(GameMap *map, Action action)
+         声明: code\BFS\soko_replay.h
+         定义: code\BFS\soko_replay.c
+    [9] uint8_t soko_stage2_build_observe_points(const GameMap *map,
+										 uint8_t box_index,
+										 Point *out_points,
+										 Action *out_face_actions,
+										 uint8_t max_points)
+         声明: code\BFS\soko_stage2.h
+         定义: code\BFS\soko_stage2.c
+  模块: code\uer_algorithm\kinematics
+    [10] void Calc_SpeedNow(MotorID motor_id)
+         声明: code\uer_algorithm\kinematics\mecanum.h
+         定义: code\uer_algorithm\kinematics\mecanum.c
+    [11] void Mecanum_entirety2part(MoveDirection car_direction, int32_t car_target_speed)
+         声明: code\uer_algorithm\kinematics\mecanum.h
+         定义: code\uer_algorithm\kinematics\mecanum.c
+    [12] void Mecanum_part2entirety(MoveDirection car_direction)
+         声明: code\uer_algorithm\kinematics\mecanum.h
+         定义: code\uer_algorithm\kinematics\mecanum.c
+    [13] int32_t odometry_get_finish_tolerance_mm(void)
+         声明: code\uer_algorithm\kinematics\odometry.h
+         定义: code\uer_algorithm\kinematics\odometry.c
+    [14] MoveState odometry_get_move_state(void)
+         声明: code\uer_algorithm\kinematics\odometry.h
+         定义: code\uer_algorithm\kinematics\odometry.c
+    [15] int32_t odometry_get_slip_weight_pct(void)
+         声明: code\uer_algorithm\kinematics\odometry.h
+         定义: code\uer_algorithm\kinematics\odometry.c
+    [16] int32_t odometry_get_vx_global_mmps(void)
+         声明: code\uer_algorithm\kinematics\odometry.h
+         定义: code\uer_algorithm\kinematics\odometry.c
+    [17] int32_t odometry_get_vy_global_mmps(void)
+         声明: code\uer_algorithm\kinematics\odometry.h
+         定义: code\uer_algorithm\kinematics\odometry.c
+  模块: code\uer_algorithm\pid
+    [18] void Rotate_PWM_Calc(void)
+         声明: code\uer_algorithm\pid\angle_pid.h
+         定义: code\uer_algorithm\pid\angle_pid.c
+    [19] void angle_pid_calc(void)
+         声明: code\uer_algorithm\pid\angle_pid.h
+         定义: code\uer_algorithm\pid\angle_pid.c
+    [20] int32_t angle_pid_get_output(void)
+         声明: code\uer_algorithm\pid\angle_pid.h
+         定义: code\uer_algorithm\pid\angle_pid.c
+    [21] bool check_pos_arrived(void)
+         声明: code\uer_algorithm\pid\position_pid.h
+         定义: code\uer_algorithm\pid\position_pid.c
+    [22] void pos_pid_calc(MotorID motor_id)
+         声明: code\uer_algorithm\pid\position_pid.h
+         定义: code\uer_algorithm\pid\position_pid.c
+    [23] void position_pid_reset(MotorID motor_id)
+         声明: code\uer_algorithm\pid\position_pid.h
+         定义: code\uer_algorithm\pid\position_pid.c
+    [24] void position_pid_reset_all(void)
+         声明: code\uer_algorithm\pid\position_pid.h
+         定义: code\uer_algorithm\pid\position_pid.c
+    [25] void rotate_pid_calc(void)
+         声明: code\uer_algorithm\pid\angle_pid.h
+         定义: code\uer_algorithm\pid\angle_pid.c
+    [26] void speed_pid_reset(MotorID motor_id)
+         声明: code\uer_algorithm\pid\speed_pid.h
+         定义: code\uer_algorithm\pid\speed_pid.c
+  模块: code\user_business
+    [27] void Control_Rotate(int32_t angle)
+         声明: code\user_business\robot_control.h
+         定义: code\user_business\robot_control.c
+    [28] uint32_t openart_get_invalid_status_count(void)
+         声明: code\user_business\state_machine.h
+         定义: code\user_business\state_machine.c
+    [29] openart_error_t openart_get_last_error(void)
+         声明: code\user_business\state_machine.h
+         定义: code\user_business\state_machine.c
+    [30] uint32_t openart_get_parse_error_count(void)
+         声明: code\user_business\state_machine.h
+         定义: code\user_business\state_machine.c
+    [31] int32_t openart_get_player_x(void)
+         声明: code\user_business\state_machine.h
+         定义: code\user_business\state_machine.c
+    [32] int32_t openart_get_player_y(void)
+         声明: code\user_business\state_machine.h
+         定义: code\user_business\state_machine.c
+    [33] uint8_t openart_has_valid_frame(void)
+         声明: code\user_business\state_machine.h
+         定义: code\user_business\state_machine.c
+  模块: code\user_driver
+    [34] void IMU_Calc_Rotate_Acc(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [35] void IMU_Calc_Rotate_Acc_Period(uint32_t period_ms)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [36] void IMU_Calc_Rotate_Angle(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [37] void IMU_Calc_Rotate_Angle_Period(uint32_t period_ms)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [38] void IMU_Convert_Physical(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [39] void IMU_calib_data(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [40] int32_t car_get_angle_now(void)
+         声明: code\user_driver\motor_driver.h
+         定义: code\user_driver\motor_driver.c
+    [41] int32_t car_get_speed_now(void)
+         声明: code\user_driver\motor_driver.h
+         定义: code\user_driver\motor_driver.c
+    [42] void change_pos_target(MotorID motor_id, int32_t position)
+         声明: code\user_driver\motor_driver.h
+         定义: code\user_driver\motor_driver.c
+    [43] void encoder_reset_all(void)
+         声明: code\user_driver\encoder.h
+         定义: code\user_driver\encoder.c
+    [44] void gyro_read_data(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [45] void imu_deal_data(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [46] int32_t imu_get_gyro_z_raw(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [47] uint8_t imu_is_ready(void)
+         声明: code\user_driver\gyroscope.h
+         定义: code\user_driver\gyroscope.c
+    [48] void motor_hw_init(MotorID motor_id)
+         声明: code\user_driver\motor_driver.h
+         定义: code\user_driver\motor_driver.c
+    [49] void motor_set_direction(MotorID motor_id, bool forward)
+         声明: code\user_driver\motor_driver.h
+         定义: code\user_driver\motor_driver.c
+    [50] void motor_stop(MotorID motor_id)
+         声明: code\user_driver\motor_driver.h
+         定义: code\user_driver\motor_driver.c
+    [51] void send_imu_data(void)
+         声明: code\user_driver\bluetooth.h
+         定义: code\user_driver\bluetooth.c
+    [52] void send_openart_map_debug(const char map[OPENART_MAP_HEIGHT][OPENART_MAP_WIDTH],
+                            int32_t player_x,
+                            int32_t player_y,
+                            int32_t valid_count,
+                            int32_t invalid_count,
+                            int32_t parse_error_count)
+         声明: code\user_driver\bluetooth.h
+         定义: code\user_driver\bluetooth.c
+    [53] void send_txt_data(int State, int32_t Pos_X, int32_t Pos_Y,
+               int32_t Angle, int32_t Speed, 
+               int16_t Encoder0, int16_t Encoder1, int16_t Encoder2, int16_t Encoder3)
+         声明: code\user_driver\bluetooth.h
+         定义: code\user_driver\bluetooth.c
+    [54] void send_wheel_data(int16_t Encoder0, int32_t speed0, int32_t position0, 
+                     int16_t Encoder1, int32_t speed1, int32_t position1, 
+                     int16_t Encoder2, int32_t speed2, int32_t position2, 
+                     int16_t Encoder3, int32_t speed3, int32_t position3)
+         声明: code\user_driver\bluetooth.h
+         定义: code\user_driver\bluetooth.c
+
+三、声明了但在项目中无定义的函数（可能来自外部SDK/库）
+----------------------------------------------------------------------
+  (无)
+
+四、.c中被调用但.h中无声明且项目中无定义的函数（外部函数/宏）
+----------------------------------------------------------------------
+  - BFS_FIXED_PLAYER_X()  (于 user\src\main.c)
+  - BFS_FIXED_PLAYER_Y()  (于 user\src\main.c)
+  - BFS_STEP2_ERROR_BRIDGE_BASE()  (于 user\src\main.c)
+  - BFS_STEP2_FILTER_DEPTH()  (于 user\src\main.c)
+  - BFS_STEP2_STATUS_BRIDGE_OK()  (于 user\src\main.c)
+  - BFS_STEP2_STATUS_WAIT_FRAME()  (于 user\src\main.c)
+  - BFS_STEP3_ERROR_FINAL_MAP()  (于 user\src\main.c)
+  - BFS_STEP3_ERROR_MOTION_BASE()  (于 user\src\main.c)
+  - BFS_STEP3_ERROR_PLAN_BASE()  (于 user\src\main.c)
+  - BFS_STEP3_ERROR_REPLAY_BASE()  (于 user\src\main.c)
+  - BFS_STEP3_STATUS_PLAN_OK()  (于 user\src\main.c)
+  - BFS_STEP3_TRIGGER_STABLE_COUNT()  (于 user\src\main.c)
+  - BFS_USE_FIXED_STAGE1_MAP_TEST()  (于 user\src\main.c)
+  - CSI_DriverIRQHandler()  (于 user\src\isr.c)
+  - LIMIT()  (于 code\user_utils\math_tools.c)
+  - LIMIT_ABS()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - LIMIT_ABS()  (于 code\uer_algorithm\pid\angle_pid.c)
+  - LIMIT_ABS()  (于 code\uer_algorithm\pid\position_pid.c)
+  - LIMIT_ABS()  (于 code\uer_algorithm\pid\speed_pid.c)
+  - LIMIT_ABS()  (于 code\user_business\robot_control.c)
+  - LPUART_ClearStatusFlags()  (于 user\src\isr.c)
+  - LPUART_GetStatusFlags()  (于 user\src\isr.c)
+  - MM_TO_PULSE()  (于 code\uer_algorithm\pid\position_pid.c)
+  - MOTION_DISPLAY_BG_COLOR()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_CAR_COLOR()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_CAR_RADIUS_PX()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_CELL_PX()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_GRID_COLOR()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_HEIGHT_PX()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_SELF_TEST_DELAY_MS()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_SELF_TEST_ENABLE()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_TARGET_COLOR()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_TARGET_RADIUS_PX()  (于 code\user_business\robot_control.c)
+  - MOTION_DISPLAY_WIDTH_PX()  (于 code\user_business\robot_control.c)
+  - WHEEL_SIGN_CHECK_DRIVE_MS()  (于 user\src\main.c)
+  - WHEEL_SIGN_CHECK_PWM_VALUE()  (于 user\src\main.c)
+  - WHEEL_SIGN_CHECK_STOP_MS()  (于 user\src\main.c)
+  - __DSB()  (于 user\src\isr.c)
+  - abs()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - abs()  (于 code\uer_algorithm\pid\angle_pid.c)
+  - abs()  (于 code\uer_algorithm\pid\position_pid.c)
+  - abs()  (于 code\uer_algorithm\pid\speed_pid.c)
+  - abs()  (于 code\user_business\robot_control.c)
+  - abs()  (于 code\user_driver\encoder.c)
+  - abs()  (于 code\user_driver\gyroscope.c)
+  - angle_error_normalize_cd()  (于 code\uer_algorithm\pid\angle_pid.c)
+  - bfs_action_name()  (于 user\src\main.c)
+  - bfs_build_filtered_raw_map()  (于 user\src\main.c)
+  - bfs_calc_raw_map_signature()  (于 user\src\main.c)
+  - bfs_dir_name()  (于 user\src\main.c)
+  - bfs_get_next_bridge_frame()  (于 user\src\main.c)
+  - bfs_majority_cell()  (于 user\src\main.c)
+  - bfs_openart_frame_to_raw_map()  (于 user\src\main.c)
+  - bfs_plan_once_for_stable_map()  (于 user\src\main.c)
+  - bfs_print_action_sequence()  (于 user\src\main.c)
+  - bfs_print_bridge_raw_map()  (于 user\src\main.c)
+  - bfs_print_motion_plan()  (于 user\src\main.c)
+  - bfs_process_new_valid_frame()  (于 user\src\main.c)
+  - bfs_push_raw_map_history()  (于 user\src\main.c)
+  - bfs_segment_type_name()  (于 user\src\main.c)
+  - bfs_send_text_line()  (于 user\src\main.c)
+  - ble6a20_init()  (于 code\user_driver\bluetooth.c)
+  - ble6a20_send_string()  (于 code\user_driver\bluetooth.c)
+  - ble6a20_send_string()  (于 user\src\main.c)
+  - camera_uart_handler()  (于 user\src\isr.c)
+  - clock_init()  (于 user\src\main.c)
+  - cosf()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - debug_init()  (于 user\src\main.c)
+  - debug_interrupr_handler()  (于 user\src\isr.c)
+  - encoder_channel_of()  (于 code\user_driver\encoder.c)
+  - encoder_clear_count()  (于 code\user_driver\encoder.c)
+  - encoder_dir_init()  (于 code\user_driver\encoder.c)
+  - encoder_forward_sign()  (于 code\user_driver\encoder.c)
+  - encoder_get_count()  (于 code\user_driver\encoder.c)
+  - encoder_normalize_delta()  (于 code\user_driver\encoder.c)
+  - encoder_prepare_delta()  (于 code\user_driver\encoder.c)
+  - exti_flag_clear()  (于 user\src\isr.c)
+  - exti_flag_get()  (于 user\src\isr.c)
+  - flexio_camera_vsync_handler()  (于 user\src\isr.c)
+  - gpio_init()  (于 code\user_driver\gpio.c)
+  - gpio_set_level()  (于 code\user_driver\motor_driver.c)
+  - imu963ra_get_acc()  (于 code\user_driver\gyroscope.c)
+  - imu963ra_get_gyro()  (于 code\user_driver\gyroscope.c)
+  - imu963ra_get_mag()  (于 code\user_driver\gyroscope.c)
+  - imu963ra_init()  (于 code\user_driver\gyroscope.c)
+  - interrupt_global_disable()  (于 code\user_business\state_machine.c)
+  - interrupt_global_enable()  (于 code\user_business\state_machine.c)
+  - interrupt_global_enable()  (于 user\src\main.c)
+  - ips200_draw_line()  (于 code\user_business\robot_control.c)
+  - ips200_draw_point()  (于 code\user_business\robot_control.c)
+  - ips200_full()  (于 code\user_business\robot_control.c)
+  - ips200_init()  (于 code\user_business\robot_control.c)
+  - ips200_set_color()  (于 code\user_business\robot_control.c)
+  - ips200_set_dir()  (于 code\user_business\robot_control.c)
+  - ips200_set_font()  (于 code\user_business\robot_control.c)
+  - low_speed_encoder_prepare_delta()  (于 code\user_driver\encoder.c)
+  - low_speed_mecanum_body_delta_um()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - memcpy()  (于 code\BFS\soko_map.c)
+  - memcpy()  (于 code\user_business\robot_control.c)
+  - memcpy()  (于 code\user_business\state_machine.c)
+  - memcpy()  (于 code\user_driver\bluetooth.c)
+  - memcpy()  (于 user\src\main.c)
+  - memset()  (于 code\BFS\soko_map.c)
+  - memset()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - memset()  (于 code\uer_algorithm\pid\angle_pid.c)
+  - memset()  (于 code\user_business\debug_runtime.c)
+  - memset()  (于 code\user_business\robot_control.c)
+  - memset()  (于 code\user_business\state_machine.c)
+  - memset()  (于 code\user_driver\bluetooth.c)
+  - memset()  (于 code\user_driver\gyroscope.c)
+  - memset()  (于 user\src\main.c)
+  - motion_debug_reset_pages()  (于 user\src\main.c)
+  - motion_display_draw_car_marker()  (于 code\user_business\robot_control.c)
+  - motion_display_draw_static_grid()  (于 code\user_business\robot_control.c)
+  - motion_display_draw_target_marker()  (于 code\user_business\robot_control.c)
+  - motion_display_is_grid_pixel()  (于 code\user_business\robot_control.c)
+  - motion_display_mm_to_pixel()  (于 code\user_business\robot_control.c)
+  - motion_display_restore_patch()  (于 code\user_business\robot_control.c)
+  - motion_display_run_power_on_self_test()  (于 code\user_business\robot_control.c)
+  - motion_exec_apply_body_command()  (于 code\user_business\robot_control.c)
+  - motion_exec_enter_error()  (于 code\user_business\robot_control.c)
+  - motion_exec_grid_to_mm_center()  (于 code\user_business\robot_control.c)
+  - motion_exec_load_plan_common()  (于 code\user_business\robot_control.c)
+  - motion_exec_normalize_angle_error_cd()  (于 code\user_business\robot_control.c)
+  - motion_exec_publish_state()  (于 code\user_business\robot_control.c)
+  - motion_exec_refresh_debug_output()  (于 user\src\main.c)
+  - motion_exec_rotate_segment_finished()  (于 code\user_business\robot_control.c)
+  - motion_exec_segment_soft_finish_reached()  (于 code\user_business\robot_control.c)
+  - motion_exec_start_next_segment()  (于 code\user_business\robot_control.c)
+  - motion_exec_stop_chassis()  (于 code\user_business\robot_control.c)
+  - motion_exec_update_feedback()  (于 code\user_business\robot_control.c)
+  - motor_abs_pwm()  (于 code\user_driver\motor_driver.c)
+  - motor_forward_level()  (于 code\user_driver\motor_driver.c)
+  - motor_pwm_to_duty()  (于 code\user_driver\motor_driver.c)
+  - odometry_axis_error_to_cmd_mmps()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - odometry_calc_slip_weight_pct()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - odometry_integrate_pose_from_raw_delta()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - odometry_limit_point_cmd_step()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - odometry_limit_velocity_step()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - openart_calc_checksum()  (于 code\user_business\state_machine.c)
+  - openart_process_packet()  (于 code\user_business\state_machine.c)
+  - openart_reset_receiver()  (于 code\user_business\state_machine.c)
+  - openart_store_frame()  (于 code\user_business\state_machine.c)
+  - pit_flag_clear()  (于 user\src\isr.c)
+  - pit_flag_get()  (于 user\src\isr.c)
+  - printf()  (于 code\BFS\soko_test_pc.c)
+  - pwm_init()  (于 code\user_driver\motor_driver.c)
+  - pwm_set_duty()  (于 code\user_driver\motor_driver.c)
+  - sinf()  (于 code\uer_algorithm\kinematics\odometry.c)
+  - smartcar_runtime_init()  (于 user\src\main.c)
+  - snprintf()  (于 code\user_driver\bluetooth.c)
+  - snprintf()  (于 user\src\main.c)
+  - soko_bomb_clear_buffers()  (于 code\BFS\soko_stage3.c)
+  - soko_bomb_decode_state()  (于 code\BFS\soko_stage3.c)
+  - soko_bomb_encode_state()  (于 code\BFS\soko_stage3.c)
+  - soko_bomb_is_visited()  (于 code\BFS\soko_stage3.c)
+  - soko_bomb_mark_visited()  (于 code\BFS\soko_stage3.c)
+  - soko_bomb_player_blocked()  (于 code\BFS\soko_stage3.c)
+  - soko_bomb_reconstruct()  (于 code\BFS\soko_stage3.c)
+  - soko_bomb_target_allowed()  (于 code\BFS\soko_stage3.c)
+  - soko_deadlock_is_blocked()  (于 code\BFS\soko_deadlock.c)
+  - soko_map_add_bomb()  (于 code\BFS\soko_map.c)
+  - soko_map_add_box()  (于 code\BFS\soko_map.c)
+  - soko_map_add_target()  (于 code\BFS\soko_map.c)
+  - soko_motion_action_angle()  (于 code\BFS\soko_motion_adapter.c)
+  - soko_push_box_blocked()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_clear_buffers()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_decode_state()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_encode_state()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_fill_result_defaults()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_is_visited()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_mark_visited()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_player_blocked()  (于 code\BFS\soko_push_bfs.c)
+  - soko_push_reconstruct()  (于 code\BFS\soko_push_bfs.c)
+  - soko_replay_is_push_blocked()  (于 code\BFS\soko_replay.c)
+  - soko_replay_is_walk_blocked()  (于 code\BFS\soko_replay.c)
+  - soko_replay_move_box()  (于 code\BFS\soko_replay.c)
+  - soko_stage1_result_better()  (于 code\BFS\soko_stage1.c)
+  - soko_stage2_build_single_target_mask()  (于 code\BFS\soko_stage2.c)
+  - soko_stage2_face_action()  (于 code\BFS\soko_stage2.c)
+  - soko_stage2_is_observe_point_valid()  (于 code\BFS\soko_stage2.c)
+  - soko_stage2_result_better()  (于 code\BFS\soko_stage2.c)
+  - soko_stage3_apply_bomb_sequence()  (于 code\BFS\soko_stage3.c)
+  - soko_stage3_fill_result_defaults()  (于 code\BFS\soko_stage3.c)
+  - soko_stage3_is_inner_wall()  (于 code\BFS\soko_stage3.c)
+  - soko_test_deadlock_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_motion_adapter_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_print_actions()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_push_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_stage1_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_stage1_complex_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_stage2_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_stage3_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_test_walk_case()  (于 code\BFS\soko_test_pc.c)
+  - soko_walk_clear_buffers()  (于 code\BFS\soko_walk_bfs.c)
+  - soko_walk_is_blocked()  (于 code\BFS\soko_walk_bfs.c)
+  - soko_walk_is_goal()  (于 code\BFS\soko_walk_bfs.c)
+  - soko_walk_is_visited()  (于 code\BFS\soko_walk_bfs.c)
+  - soko_walk_mark_visited()  (于 code\BFS\soko_walk_bfs.c)
+  - soko_walk_reconstruct()  (于 code\BFS\soko_walk_bfs.c)
+  - speed_pid_get_integral_scale()  (于 code\uer_algorithm\pid\speed_pid.c)
+  - speed_pid_ramp_target()  (于 code\uer_algorithm\pid\speed_pid.c)
+  - system_delay_ms()  (于 code\uer_algorithm\pid\angle_pid.c)
+  - system_delay_ms()  (于 code\user_business\robot_control.c)
+  - system_delay_ms()  (于 code\user_driver\bluetooth.c)
+  - system_delay_ms()  (于 code\user_driver\gyroscope.c)
+  - system_delay_ms()  (于 user\src\main.c)
+  - tof_module_exti_handler()  (于 user\src\isr.c)
+  - uart_init()  (于 code\user_business\state_machine.c)
+  - uart_query_byte()  (于 code\user_business\state_machine.c)
+  - uart_rx_interrupt()  (于 code\user_business\state_machine.c)
+  - va_end()  (于 user\src\main.c)
+  - va_start()  (于 user\src\main.c)
+  - vsnprintf()  (于 user\src\main.c)
+  - wheel_sign_check_tick()  (于 user\src\main.c)
+  - wireless_module_spi_handler()  (于 user\src\isr.c)
+  - wireless_module_uart_handler()  (于 user\src\isr.c)

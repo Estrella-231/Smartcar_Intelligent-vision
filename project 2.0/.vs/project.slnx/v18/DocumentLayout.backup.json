@@ -1,0 +1,104 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\a_Visual Group\\project\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\a_Visual Group\\project\\user\\src\\main.c||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:user\\src\\main.c||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\a_Visual Group\\project\\code\\motor.c||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:code\\motor.c||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\a_Visual Group\\project\\code\\motor.h||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:code\\motor.h||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\a_Visual Group\\project\\code\\\u672C\u6587\u4EF6\u5939\u4F5C\u7528.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:code\\\u672C\u6587\u4EF6\u5939\u4F5C\u7528.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\a_Visual Group\\project\\RT1064\u667A\u80FD\u8F66\u63A8\u8350\u5F15\u811A\u5206\u914D.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:RT1064\u667A\u80FD\u8F66\u63A8\u8350\u5F15\u811A\u5206\u914D.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "motor.c",
+              "DocumentMoniker": "E:\\a_Visual Group\\project\\code\\motor.c",
+              "RelativeDocumentMoniker": "code\\motor.c",
+              "ToolTip": "E:\\a_Visual Group\\project\\code\\motor.c",
+              "RelativeToolTip": "code\\motor.c",
+              "ViewState": "AgIAAHUBAAAAAAAAAAAAAIUBAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-01-16T07:07:32.316Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "motor.h",
+              "DocumentMoniker": "E:\\a_Visual Group\\project\\code\\motor.h",
+              "RelativeDocumentMoniker": "code\\motor.h",
+              "ToolTip": "E:\\a_Visual Group\\project\\code\\motor.h",
+              "RelativeToolTip": "code\\motor.h",
+              "ViewState": "AgIAAIUAAAAAAAAAAAAAAJUAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-01-16T05:57:09.906Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "RT1064\u667A\u80FD\u8F66\u63A8\u8350\u5F15\u811A\u5206\u914D.txt",
+              "DocumentMoniker": "E:\\a_Visual Group\\project\\RT1064\u667A\u80FD\u8F66\u63A8\u8350\u5F15\u811A\u5206\u914D.txt",
+              "RelativeDocumentMoniker": "RT1064\u667A\u80FD\u8F66\u63A8\u8350\u5F15\u811A\u5206\u914D.txt",
+              "ToolTip": "E:\\a_Visual Group\\project\\RT1064\u667A\u80FD\u8F66\u63A8\u8350\u5F15\u811A\u5206\u914D.txt",
+              "RelativeToolTip": "RT1064\u667A\u80FD\u8F66\u63A8\u8350\u5F15\u811A\u5206\u914D.txt",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
+              "WhenOpened": "2026-01-16T05:54:03.197Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.c",
+              "DocumentMoniker": "E:\\a_Visual Group\\project\\user\\src\\main.c",
+              "RelativeDocumentMoniker": "user\\src\\main.c",
+              "ToolTip": "E:\\a_Visual Group\\project\\user\\src\\main.c",
+              "RelativeToolTip": "user\\src\\main.c",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-01-15T07:31:19.706Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "\u672C\u6587\u4EF6\u5939\u4F5C\u7528.txt",
+              "DocumentMoniker": "E:\\a_Visual Group\\project\\code\\\u672C\u6587\u4EF6\u5939\u4F5C\u7528.txt",
+              "RelativeDocumentMoniker": "code\\\u672C\u6587\u4EF6\u5939\u4F5C\u7528.txt",
+              "ToolTip": "E:\\a_Visual Group\\project\\code\\\u672C\u6587\u4EF6\u5939\u4F5C\u7528.txt",
+              "RelativeToolTip": "code\\\u672C\u6587\u4EF6\u5939\u4F5C\u7528.txt",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
+              "WhenOpened": "2026-01-15T07:30:16.997Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

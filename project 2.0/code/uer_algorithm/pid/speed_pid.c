@@ -1,0 +1,293 @@
+#include "speed_pid.h"
+
+#include <stdlib.h>
+
+PID_Pram_t g_speed_pid[MOTOR_MAX] =
+{
+    {
+        .kp = 1.5f, .ki = 0.05f, .kd = 0.0f, .kf = 1.8f,
+        .i_limit = 220,
+        .output_limit = 850,
+        .min_effect_pwm_fwd = 70, .min_effect_pwm_rev = 75,
+        .integral_full_error = 50, .integral_half_error = 120,
+        .target_step_limit = 20,
+        .zero_reset_mode = PID_ZERO_RESET_IMMEDIATE, .zero_decay_factor = 0.8f,
+        .enable_d = false, .d_filter_alpha = 0.7f
+    },
+    {
+        .kp = 1.5f, .ki = 0.05f, .kd = 0.0f, .kf = 1.8f,
+        .i_limit = 220,
+        .output_limit = 850,
+        .min_effect_pwm_fwd = 70, .min_effect_pwm_rev = 75,
+        .integral_full_error = 50, .integral_half_error = 120,
+        .target_step_limit = 20,
+        .zero_reset_mode = PID_ZERO_RESET_IMMEDIATE, .zero_decay_factor = 0.8f,
+        .enable_d = false, .d_filter_alpha = 0.7f
+    },
+    {
+        .kp = 1.6f, .ki = 0.05f, .kd = 0.0f, .kf = 1.9f,
+        .i_limit = 240,
+        .output_limit = 900,
+        .min_effect_pwm_fwd = 72, .min_effect_pwm_rev = 78,
+        .integral_full_error = 50, .integral_half_error = 120,
+        .target_step_limit = 20,
+        .zero_reset_mode = PID_ZERO_RESET_IMMEDIATE, .zero_decay_factor = 0.8f,
+        .enable_d = false, .d_filter_alpha = 0.7f
+    },
+    {
+        .kp = 1.6f, .ki = 0.05f, .kd = 0.0f, .kf = 1.9f,
+        .i_limit = 240,
+        .output_limit = 870,
+        .min_effect_pwm_fwd = 72, .min_effect_pwm_rev = 78,
+        .integral_full_error = 50, .integral_half_error = 120,
+        .target_step_limit = 20,
+        .zero_reset_mode = PID_ZERO_RESET_IMMEDIATE, .zero_decay_factor = 0.8f,
+        .enable_d = false, .d_filter_alpha = 0.7f
+    }
+};
+
+static float speed_pid_get_integral_scale(const PID_Pram_t *pid, int32_t err_abs)
+{
+    if(err_abs < pid->integral_full_error)
+    {
+        return 1.0f;
+    }
+
+    if(err_abs < pid->integral_half_error)
+    {
+        return 0.5f;
+    }
+
+    return 0.0f;
+}
+
+static int32_t speed_pid_ramp_target(int32_t target, int32_t last_target, int32_t step_limit)
+{
+    int32_t delta = target - last_target;
+
+    if(step_limit <= 0)
+    {
+        return target;
+    }
+
+    if(delta > step_limit)
+    {
+        return last_target + step_limit;
+    }
+
+    if(delta < -step_limit)
+    {
+        return last_target - step_limit;
+    }
+
+    return target;
+}
+
+void speed_pid_reset(MotorID motor_id)
+{
+    if(motor_id >= MOTOR_MAX)
+    {
+        return;
+    }
+
+    g_speed_pid[motor_id].integral = 0.0f;
+    g_speed_pid[motor_id].err = 0;
+    g_speed_pid[motor_id].last_error = 0;
+    g_speed_pid[motor_id].derivative_lpf = 0.0f;
+    g_speed_pid[motor_id].output = 0;
+    g_speed_pid[motor_id].last_output = 0;
+    g_speed_pid[motor_id].target_ramped = 0;
+    g_speed_pid[motor_id].d_state = 0.0f;
+    g_speed_pid[motor_id].last_measurement = 0;
+}
+
+void speed_pid_reset_all(void)
+{
+    for(int i = 0; i < MOTOR_MAX; i++)
+    {
+        speed_pid_reset((MotorID)i);
+    }
+}
+
+int32_t speed_pid_get_target_ramped(MotorID motor_id)
+{
+    if(motor_id >= MOTOR_MAX)
+    {
+        return 0;
+    }
+
+    return g_speed_pid[motor_id].target_ramped;
+}
+
+int32_t speed_pid_get_error(MotorID motor_id)
+{
+    if(motor_id >= MOTOR_MAX)
+    {
+        return 0;
+    }
+
+    return g_speed_pid[motor_id].err;
+}
+
+int32_t speed_pid_get_output(MotorID motor_id)
+{
+    if(motor_id >= MOTOR_MAX)
+    {
+        return 0;
+    }
+
+    return g_speed_pid[motor_id].output;
+}
+
+int32_t speed_pid_get_output_limit(MotorID motor_id)
+{
+    if(motor_id >= MOTOR_MAX)
+    {
+        return 0;
+    }
+
+    return g_speed_pid[motor_id].output_limit;
+}
+
+int32_t speed_pid_calc(MotorID motor_id,
+                       int32_t target_speed,
+                       int32_t current_speed,
+                       uint32_t period_ms)
+{
+    PID_Pram_t *pid;
+    int32_t limited_target;
+    int32_t ramped_target;
+    int32_t err;
+    int32_t err_abs;
+    float dt_s;
+    float integral_scale;
+    float candidate_integral;
+    float ff_output;
+    float d_term = 0.0f;
+    float pre_output;
+    float final_output;
+    int32_t pwm_unsat_candidate;
+    int32_t pwm_command;
+    bool allow_integral = false;
+
+    if(motor_id >= MOTOR_MAX || period_ms == 0)
+    {
+        return 0;
+    }
+
+    pid = &g_speed_pid[motor_id];
+    dt_s = (float)period_ms / 1000.0f;
+
+    limited_target = LIMIT_ABS(target_speed, MAX_WHEEL_SPEED);
+    ramped_target = speed_pid_ramp_target(limited_target,
+                                          pid->target_ramped,
+                                          pid->target_step_limit);
+    pid->target_ramped = ramped_target;
+
+    change_speed_now(motor_id, current_speed);
+
+    if(ramped_target == 0)
+    {
+        if(pid->zero_reset_mode == PID_ZERO_RESET_IMMEDIATE)
+        {
+            pid->integral = 0.0f;
+        }
+        else
+        {
+            pid->integral *= pid->zero_decay_factor;
+
+            if(pid->integral > -1.0f && pid->integral < 1.0f)
+            {
+                pid->integral = 0.0f;
+            }
+        }
+
+        pid->err = 0;
+        pid->last_error = 0;
+        pid->derivative_lpf = 0.0f;
+        pid->output = 0;
+        pid->last_output = 0;
+        pid->d_state = 0.0f;
+        pid->last_measurement = current_speed;
+        g_motor[motor_id].pwm_out = 0;
+        return 0;
+    }
+
+    err = ramped_target - current_speed;
+    err_abs = abs(err);
+    pid->err = err;
+
+    ff_output = pid->kf * (float)ramped_target;
+
+    if(pid->enable_d && pid->kd > 0.0f)
+    {
+        float measurement_derivative =
+            ((float)current_speed - (float)pid->last_measurement) / dt_s;
+        float d_raw = -pid->kd * measurement_derivative;
+
+        pid->d_state = pid->d_filter_alpha * pid->d_state +
+                       (1.0f - pid->d_filter_alpha) * d_raw;
+        d_term = pid->d_state;
+        pid->derivative_lpf = d_term;
+    }
+    else
+    {
+        pid->d_state = 0.0f;
+        pid->derivative_lpf = 0.0f;
+    }
+
+    integral_scale = speed_pid_get_integral_scale(pid, err_abs);
+    candidate_integral = pid->integral + ((float)err * dt_s * integral_scale);
+    candidate_integral = LIMIT_ABS(candidate_integral, (float)pid->i_limit);
+
+    pre_output = ff_output +
+                 pid->kp * (float)err +
+                 pid->ki * candidate_integral +
+                 d_term;
+    pwm_unsat_candidate = (int32_t)pre_output;
+
+    if(abs(pwm_unsat_candidate) <= pid->output_limit)
+    {
+        allow_integral = true;
+    }
+    else if(pwm_unsat_candidate > pid->output_limit && err < 0)
+    {
+        allow_integral = true;
+    }
+    else if(pwm_unsat_candidate < -pid->output_limit && err > 0)
+    {
+        allow_integral = true;
+    }
+
+    if(allow_integral)
+    {
+        pid->integral = candidate_integral;
+        final_output = pre_output;
+    }
+    else
+    {
+        final_output = ff_output +
+                       pid->kp * (float)err +
+                       pid->ki * pid->integral +
+                       d_term;
+    }
+
+    pwm_command = LIMIT_ABS((int32_t)final_output, pid->output_limit);
+
+    if(pwm_command > 0 && pwm_command < pid->min_effect_pwm_fwd)
+    {
+        pwm_command = 0;
+    }
+    else if(pwm_command < 0 && pwm_command > -pid->min_effect_pwm_rev)
+    {
+        pwm_command = 0;
+    }
+
+    pid->output = pwm_command;
+    pid->last_output = pwm_command;
+    pid->last_error = err;
+    pid->last_measurement = current_speed;
+    g_motor[motor_id].pwm_out = pwm_command;
+
+    return pwm_command;
+}

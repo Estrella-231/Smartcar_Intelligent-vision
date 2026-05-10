@@ -126,7 +126,9 @@ static int32_t odometry_calc_slip_weight_raw_pct(void)
             return 0;
         }
 
-        return 100 - ((total_error - ODOM_TRACK_ERROR_SOFT_PULSE) * 100) / error_span;
+        return ODOM_SOFT_WEIGHT_PCT -
+               ((total_error - ODOM_TRACK_ERROR_SOFT_PULSE) *
+                ODOM_SOFT_WEIGHT_PCT) / error_span;
     }
 
     return 100;
@@ -251,21 +253,46 @@ static int32_t odometry_axis_error_to_cmd_mmps(int32_t axis_error_mm)
 
 static void odometry_integrate_pose_from_raw_delta(int32_t yaw_cd)
 {
+    int32_t lf_delta = get_encoder_position_delta(MOTOR_LF);
+    int32_t rf_delta = get_encoder_position_delta(MOTOR_RF);
+    int32_t lb_delta = get_encoder_position_delta(MOTOR_LB);
+    int32_t rb_delta = get_encoder_position_delta(MOTOR_RB);
     int32_t vx_body_um;
     int32_t vy_body_um;
     int32_t vx_global_um;
     int32_t vy_global_um;
-    float yaw_rad = ((float)yaw_cd * 3.1415926f) / 18000.0f;
-    float cos_yaw = cosf(yaw_rad);
-    float sin_yaw = sinf(yaw_rad);
+    float yaw_rad;
+    float cos_yaw;
+    float sin_yaw;
 
-    low_speed_mecanum_body_delta_um(get_encoder_position_delta(MOTOR_LF),
-                                    get_encoder_position_delta(MOTOR_RF),
-                                    get_encoder_position_delta(MOTOR_LB),
-                                    get_encoder_position_delta(MOTOR_RB),
-                                    PULSE_PER_MM,
-                                    &vx_body_um,
-                                    &vy_body_um);
+    low_speed_mecanum_body_delta_um(lf_delta, rf_delta, lb_delta, rb_delta,
+                                    PULSE_PER_MM, &vx_body_um, &vy_body_um);
+
+    /*
+     * Static gate: when wheel targets, encoder deltas, and synthesized body
+     * displacement are all tiny, treat the sample as quantization noise.
+     * Keep the gate open whenever the chassis is actively commanded to move.
+     */
+    if((abs(speed_pid_get_target_ramped(MOTOR_LF)) <= ODOM_MOTION_TARGET_DEADBAND_PULSE) &&
+       (abs(speed_pid_get_target_ramped(MOTOR_RF)) <= ODOM_MOTION_TARGET_DEADBAND_PULSE) &&
+       (abs(speed_pid_get_target_ramped(MOTOR_LB)) <= ODOM_MOTION_TARGET_DEADBAND_PULSE) &&
+       (abs(speed_pid_get_target_ramped(MOTOR_RB)) <= ODOM_MOTION_TARGET_DEADBAND_PULSE) &&
+       (abs(lf_delta) <= ODOM_RAW_DELTA_DEADBAND_PULSE) &&
+       (abs(rf_delta) <= ODOM_RAW_DELTA_DEADBAND_PULSE) &&
+       (abs(lb_delta) <= ODOM_RAW_DELTA_DEADBAND_PULSE) &&
+       (abs(rb_delta) <= ODOM_RAW_DELTA_DEADBAND_PULSE) &&
+       (abs(vx_body_um) <= ODOM_RAW_BODY_DEADBAND_UM) &&
+       (abs(vy_body_um) <= ODOM_RAW_BODY_DEADBAND_UM))
+    {
+        g_odometry.odometry_is_integrating = 0U;
+        return;
+    }
+
+    g_odometry.odometry_is_integrating = 1U;
+
+    yaw_rad = ((float)yaw_cd * 3.1415926f) / 18000.0f;
+    cos_yaw = cosf(yaw_rad);
+    sin_yaw = sinf(yaw_rad);
 
     vx_global_um = (int32_t)((float)vx_body_um * cos_yaw +
                              (float)vy_body_um * sin_yaw);
@@ -663,4 +690,9 @@ int32_t odometry_get_slip_weight_pct(void)
 MoveState odometry_get_move_state(void)
 {
     return g_odometry.move_state;
+}
+
+uint8_t odometry_get_is_integrating(void)
+{
+    return g_odometry.odometry_is_integrating;
 }

@@ -184,12 +184,81 @@ static void test_near_target_command_stays_above_effective_motion_threshold(void
     assert(vy_cmd_mmps == 0);
 }
 
+/*
+ * Verify the static integration gate: when the chassis is truly idle
+ * (targets ≈ 0 AND all wheel deltas ≤ noise floor), raw-delta position
+ * integration must be suppressed so quantisation noise does not accumulate
+ * into the odometry coordinate.
+ */
+static void test_static_gate_suppresses_noise_when_chassis_idle(void)
+{
+    int i;
+
+    reset_test_state();
+
+    /*
+     * target_ramped = 0  (≤ ODOM_MOTION_TARGET_DEADBAND_PULSE = 2)
+     * encoder_delta  = 1 (≤ ODOM_RAW_DELTA_DEADBAND_PULSE     = 1)
+     * body_um from delta=1 all-wheels ≈ 130 um
+     *               (≤ ODOM_RAW_BODY_DEADBAND_UM              = 500)
+     * All three gate conditions satisfied → must skip integration.
+     */
+    for(i = 0; i < MOTOR_MAX; i++)
+    {
+        g_test_target_ramped[i] = 0;
+        g_test_encoder_delta[i] = 1;
+    }
+
+    odometry_update(EXEC_CONTROL_PERIOD_MS);
+
+    assert(odometry_get_is_integrating() == 0);
+    assert(odometry_get_x_mm() == 0);
+    assert(odometry_get_y_mm() == 0);
+}
+
+/*
+ * Verify the static integration gate does NOT suppress when the chassis is
+ * actively commanded to move.
+ *
+ * Even though the encoder delta per cycle is small (low-speed creep), the
+ * non-zero wheel target must keep the gate open so slow approach moves are
+ * not silently dropped from the pose estimate.
+ */
+static void test_static_gate_keeps_integrating_when_target_nonzero(void)
+{
+    int i;
+
+    reset_test_state();
+
+    /*
+     * target_ramped = 10 (> ODOM_MOTION_TARGET_DEADBAND_PULSE = 2)
+     * → target condition fails → gate stays open regardless of delta size.
+     *
+     * delta = 5 for all wheels (uniform forward):
+     * vy_body_um ≈ 5*4*1000/(4*7.7) ≈ 649 um per cycle.
+     * After two cycles (×ODOM_SCALE_Y ≈ 0.977) → y_um ≈ 1268 → y_mm = 1.
+     */
+    for(i = 0; i < MOTOR_MAX; i++)
+    {
+        g_test_target_ramped[i] = 10;
+        g_test_encoder_delta[i] = 5;
+    }
+
+    odometry_update(EXEC_CONTROL_PERIOD_MS);
+    assert(odometry_get_is_integrating() == 1);
+
+    odometry_update(EXEC_CONTROL_PERIOD_MS);
+    assert(odometry_get_y_mm() > 0);
+}
+
 int main(void)
 {
     test_slip_weight_is_continuous_between_soft_and_hard_error();
     test_slip_detection_uses_ramped_target_not_raw_target();
     test_finish_tolerance_cannot_be_smaller_than_axis_stop_deadband();
     test_near_target_command_stays_above_effective_motion_threshold();
+    test_static_gate_suppresses_noise_when_chassis_idle();
+    test_static_gate_keeps_integrating_when_target_nonzero();
 
     puts("odometry_slip_test passed");
     return 0;

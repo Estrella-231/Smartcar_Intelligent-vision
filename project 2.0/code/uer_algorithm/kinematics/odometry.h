@@ -18,6 +18,7 @@ typedef struct {
     int32_t target_y_mm;
     int32_t slip_weight_pct;
     MoveState move_state;
+    uint8_t odometry_is_integrating;
 } Odometry_State_t;
 
 typedef enum {
@@ -64,6 +65,7 @@ int32_t odometry_get_y_mm(void);
 int32_t odometry_get_target_dx_mm(void);
 int32_t odometry_get_target_dy_mm(void);
 int32_t odometry_get_slip_weight_pct(void);
+uint8_t odometry_get_is_integrating(void);
 MoveState odometry_get_move_state(void);
 
 #endif

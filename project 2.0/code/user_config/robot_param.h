@@ -168,6 +168,13 @@
 #define ODOM_SOFT_WEIGHT_PCT             (50)
 #define ODOM_SLIP_WEIGHT_RECOVER_STEP_PCT (5)
 
+// Static gate: suppress raw-delta integration when the chassis is stationary.
+// Only skip integration when both the wheel commands and measured deltas are tiny.
+// If the chassis is actively moving, keep all small deltas for low-speed creep.
+#define ODOM_RAW_DELTA_DEADBAND_PULSE      (1)
+#define ODOM_RAW_BODY_DEADBAND_UM          (500)
+#define ODOM_MOTION_TARGET_DEADBAND_PULSE  (2)
+
 /************************ Motion saturation guard ************************/
 // Unified body-command scaling applied before mecanum inverse kinematics.
 #define MOTION_CMD_SCALE_ENABLE               (1)

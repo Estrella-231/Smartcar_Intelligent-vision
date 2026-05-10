@@ -183,6 +183,17 @@
 // odometry scale and saturation guard are validated on hardware.
 #define BODY_SPEED_LOOP_ENABLE                (0)
 
+/************************ Motor Stall Protection ************************/
+// Detects "high PWM + low speed" condition to prevent motor burnout.
+// When PWM output exceeds threshold while encoder speed remains below threshold
+// for a confirmation time, the motor is stopped and integral is cleared.
+#define STALL_PROTECTION_ENABLE           (1)
+#define STALL_PWM_THRESHOLD_PCT          (85)    // PWM saturation threshold (85%)
+#define STALL_SPEED_THRESHOLD_PULSE      (5)     // Speed threshold (pulses/period)
+#define STALL_CONFIRM_TIME_MS            (500)   // Stall confirmation time
+#define STALL_RECOVERY_DELAY_MS          (2000)  // Recovery delay time
+#define STALL_STOP_ALL_MOTORS            (1)     // Stop all motors on stall
+
 /************************ Round-2 point move ************************/
 // Global-frame axis P controller. Output unit is mm/s.
 #define POINT_MOVE_KP                    (0.5f)

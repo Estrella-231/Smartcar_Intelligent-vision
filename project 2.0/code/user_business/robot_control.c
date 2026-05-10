@@ -105,6 +105,9 @@ static int16_t g_last_target_py = -1;
 static uint8_t g_last_target_valid = 0U;
 static uint8_t g_motion_display_skip_divider = 0U;
 
+/* Forward declarations for static functions */
+static void motion_exec_enter_error(exec_error_t error_code);
+
 static void motion_display_run_power_on_self_test(void)
 {
 #if MOTION_DISPLAY_SELF_TEST_ENABLE
@@ -618,10 +621,23 @@ static void motion_exec_apply_body_command(int32_t vx_cmd_mmps,
     {
         int32_t pwm_command;
 
+        if(speed_pid_is_stalled((MotorID)i))
+        {
+            motion_exec_enter_error((exec_error_t)(EXEC_ERROR_MOTOR_STALL_LF + i));
+            return;
+        }
+
         pwm_command = speed_pid_calc((MotorID)i,
                                      get_speed_target((MotorID)i),
                                      get_encoder_data((MotorID)i),
                                      control_period_ms);
+
+        if(speed_pid_is_stalled((MotorID)i))
+        {
+            motion_exec_enter_error((exec_error_t)(EXEC_ERROR_MOTOR_STALL_LF + i));
+            return;
+        }
+
         motor_set_pwm((MotorID)i, pwm_command);
     }
 
@@ -851,6 +867,7 @@ void motion_exec_init(void)
 
     odometry_init(ODOM_START_X_MM, ODOM_START_Y_MM);
     angle_pid_reset_state();
+    speed_pid_stall_protection_init();
     motion_exec_stop_chassis();
     motion_exec_runtime_state_reset();
     motion_exec_publish_state();
@@ -1043,6 +1060,25 @@ void motion_exec_tick(uint32_t control_period_ms)
             break;
 
         case CAR_STATE_ERROR:
+            motion_exec_stop_chassis();
+            speed_pid_stall_protection_tick(control_period_ms);
+
+            if(!speed_pid_any_motor_stalled() &&
+               g_motion_exec_state.start_requested)
+            {
+                g_motion_exec_state.error_code = EXEC_ERROR_NONE;
+
+                if(g_motion_exec_manual_plan_active && g_motion_exec_has_plan)
+                {
+                    g_motion_exec_state.phase = CAR_STATE_EXEC_SEGMENT;
+                }
+                else
+                {
+                    g_motion_exec_state.phase = CAR_STATE_WAIT_MAP;
+                }
+            }
+            break;
+
         default:
             motion_exec_stop_chassis();
             break;

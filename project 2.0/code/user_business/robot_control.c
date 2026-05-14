@@ -838,6 +838,12 @@ static void motion_exec_update_feedback(uint32_t control_period_ms)
  */
 static void motion_exec_enter_error(exec_error_t error_code)
 {
+    motion_exec_log_line("EXEC error code=%d idx=%u phase=%d d=(%ld,%ld)\r\n",
+                         error_code,
+                         g_motion_exec_state.current_segment_index,
+                         g_motion_exec_state.phase,
+                         (long)odometry_get_target_dx_mm(),
+                         (long)odometry_get_target_dy_mm());
     g_motion_exec_state.phase = CAR_STATE_ERROR;
     g_motion_exec_state.error_code = error_code;
     g_motion_exec_state.plan_finished = 0U;
@@ -1258,10 +1264,35 @@ void motion_exec_tick(uint32_t control_period_ms)
             }
             else
             {
-                if(motion_exec_segment_soft_finish_reached() ||
-                   motion_exec_segment_near_finish_dwelled(control_period_ms) ||
-                   (odometry_update_point_move_command(&vx_cmd_mmps, &vy_cmd_mmps) == MOVE_STATE_FINISH))
+                uint8_t soft_finished = motion_exec_segment_soft_finish_reached();
+                uint8_t near_finished = 0U;
+                MoveState point_move_state = MOVE_STATE_RUNNING;
+                const char *finish_reason = "POINT";
+
+                if(!soft_finished)
                 {
+                    near_finished = motion_exec_segment_near_finish_dwelled(control_period_ms);
+                }
+
+                if(!soft_finished && !near_finished)
+                {
+                    point_move_state =
+                        odometry_update_point_move_command(&vx_cmd_mmps, &vy_cmd_mmps);
+                }
+
+                if(soft_finished ||
+                   near_finished ||
+                   (point_move_state == MOVE_STATE_FINISH))
+                {
+                    if(soft_finished)
+                    {
+                        finish_reason = "SOFT";
+                    }
+                    else if(near_finished)
+                    {
+                        finish_reason = "NEAR";
+                    }
+
                     /*
                      * Keep the finish transition conservative.
                      *
@@ -1276,8 +1307,9 @@ void motion_exec_tick(uint32_t control_period_ms)
                         motion_exec_stop_chassis();
                     }
                     motion_exec_log_line(
-                        "EXEC done idx=%u %s %s%u odom=(%ld,%ld) tgt=(%ld,%ld) d=(%ld,%ld)\r\n",
+                        "EXEC done idx=%u reason=%s %s %s%u odom=(%ld,%ld) tgt=(%ld,%ld) d=(%ld,%ld)\r\n",
                         g_motion_exec_state.current_segment_index,
+                        finish_reason,
                         motion_exec_segment_type_name(g_motion_exec_state.current_segment.type),
                         motion_exec_dir_name(g_motion_exec_state.current_segment.dir),
                         g_motion_exec_state.current_segment.cells,

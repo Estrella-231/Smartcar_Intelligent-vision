@@ -676,6 +676,42 @@ static void test_near_target_dwell_accepts_sticky_segment(void)
     assert(g_odometry_x_mm == g_odometry_target_x_mm);
 }
 
+static void test_near_target_no_progress_accepts_sticky_segment(void)
+{
+    motion_exec_runtime_state_t runtime_state;
+    MotionPlan manual_plan;
+
+    reset_test_state();
+    memset(&manual_plan, 0, sizeof(manual_plan));
+    manual_plan.count = 1U;
+    manual_plan.data[0].type = SEG_WALK;
+    manual_plan.data[0].dir = DIR_RIGHT;
+    manual_plan.data[0].cells = 1U;
+
+    g_test_point_vx_cmd_mmps = POINT_MOVE_MIN_EFFECTIVE_MMPS;
+    g_test_point_vy_cmd_mmps = 0;
+
+    motion_exec_init();
+    motion_exec_load_manual_plan(&manual_plan, ODOM_START_GRID_X, ODOM_START_GRID_Y);
+    motion_exec_request_start();
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    g_odometry_x_mm = g_odometry_target_x_mm - (EXEC_SEGMENT_NEAR_ACCEPT_TOL_MM + 20);
+    g_odometry_y_mm = g_odometry_target_y_mm;
+    g_odometry_move_state = MOVE_STATE_RUNNING;
+
+    for(int i = 0; i < ((EXEC_SEGMENT_STICKY_ACCEPT_MS / EXEC_CONTROL_PERIOD_MS) + 2); i++)
+    {
+        motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+    }
+
+    assert(motion_exec_runtime_state_copy(&runtime_state));
+    assert(runtime_state.current_segment_index == 1U);
+    assert(runtime_state.phase == CAR_STATE_PLAN_DONE);
+    assert(runtime_state.plan_finished == 1U);
+    assert(g_odometry_x_mm == g_odometry_target_x_mm);
+}
+
 static void test_sustained_saturation_scales_body_command_next_cycle(void)
 {
     MotionPlan manual_plan;
@@ -777,6 +813,7 @@ int main(void)
     test_completed_segment_snaps_odometry_to_grid_target();
     test_consecutive_move_segments_do_not_full_stop_between_segments();
     test_near_target_dwell_accepts_sticky_segment();
+    test_near_target_no_progress_accepts_sticky_segment();
     test_sustained_saturation_scales_body_command_next_cycle();
     test_command_scale_keeps_translation_above_effective_motion_threshold();
     test_heading_correction_does_not_dominate_lateral_translation();

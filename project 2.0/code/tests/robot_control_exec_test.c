@@ -25,6 +25,7 @@ static int32_t g_last_angle_pid_target_cd = 0;
 static int32_t g_last_motor_pwm[MOTOR_MAX] = {0};
 static int32_t g_test_point_vx_cmd_mmps = 0;
 static int32_t g_test_point_vy_cmd_mmps = 0;
+static int32_t g_last_finish_tolerance_mm = 0;
 static int32_t g_speed_pid_error[MOTOR_MAX] = {0};
 static int32_t g_speed_pid_output[MOTOR_MAX] = {0};
 static int32_t g_speed_pid_output_limit[MOTOR_MAX] = {0};
@@ -42,6 +43,12 @@ void send_data(int32_t a, int32_t b, int32_t c, int32_t d)
     (void)b;
     (void)c;
     (void)d;
+}
+
+uint32_t ble6a20_send_string(const char *str)
+{
+    (void)str;
+    return 0;
 }
 
 void encoder_read_data(void)
@@ -202,6 +209,11 @@ void odometry_set_target_point(int32_t target_x_mm, int32_t target_y_mm)
     g_odometry_move_state = MOVE_STATE_RUNNING;
 }
 
+void odometry_set_finish_tolerance_mm(int32_t tolerance_mm)
+{
+    g_last_finish_tolerance_mm = tolerance_mm;
+}
+
 MoveState odometry_update_point_move_command(int32_t *vx_cmd_mmps,
                                              int32_t *vy_cmd_mmps)
 {
@@ -239,6 +251,26 @@ int32_t odometry_get_target_dy_mm(void)
 void speed_pid_reset_all(void)
 {
     g_speed_pid_reset_all_call_count++;
+}
+
+void speed_pid_stall_protection_init(void)
+{
+}
+
+void speed_pid_stall_protection_tick(uint32_t period_ms)
+{
+    (void)period_ms;
+}
+
+uint8_t speed_pid_is_stalled(MotorID motor_id)
+{
+    (void)motor_id;
+    return 0U;
+}
+
+uint8_t speed_pid_any_motor_stalled(void)
+{
+    return 0U;
 }
 
 int32_t speed_pid_calc(MotorID motor_id,
@@ -419,6 +451,7 @@ static void reset_test_state(void)
     g_last_angle_pid_target_cd = 0;
     g_test_point_vx_cmd_mmps = 0;
     g_test_point_vy_cmd_mmps = 0;
+    g_last_finish_tolerance_mm = 0;
     g_speed_pid_reset_all_call_count = 0;
     g_force_speed_pid_saturation = 0U;
 }
@@ -495,6 +528,114 @@ static void test_manual_plan_load_bypasses_bfs_wait_states(void)
            ((ODOM_START_GRID_X + 2) * FIELD_GRID_CELL_MM + FIELD_GRID_CELL_MM / 2));
     assert(runtime_state.segment_target_y_mm == ODOM_START_Y_MM);
     assert(g_last_point_move_profile == POINT_MOVE_PROFILE_WALK);
+}
+
+static void test_manual_debug_mode_does_not_accept_segment_at_default_tolerance(void)
+{
+    motion_exec_runtime_state_t runtime_state;
+    MotionPlan manual_plan;
+
+    reset_test_state();
+    memset(&manual_plan, 0, sizeof(manual_plan));
+    manual_plan.count = 1U;
+    manual_plan.data[0].type = SEG_WALK;
+    manual_plan.data[0].dir = DIR_RIGHT;
+    manual_plan.data[0].cells = 2U;
+
+    g_test_point_vx_cmd_mmps = POINT_MOVE_MIN_EFFECTIVE_MMPS;
+    g_test_point_vy_cmd_mmps = 0;
+
+    motion_exec_init();
+    assert(g_last_finish_tolerance_mm == DEBUG_POINT_MOVE_FINISH_TOL_MM);
+
+    motion_exec_load_manual_plan(&manual_plan, ODOM_START_GRID_X, ODOM_START_GRID_Y);
+    motion_exec_request_start();
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    g_odometry_x_mm = g_odometry_target_x_mm - (DEBUG_EXEC_SEGMENT_ACCEPT_TOL_MM + 5);
+    g_odometry_y_mm = g_odometry_target_y_mm;
+    g_odometry_move_state = MOVE_STATE_RUNNING;
+
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    assert(motion_exec_runtime_state_copy(&runtime_state));
+    assert(runtime_state.phase == CAR_STATE_WAIT_SEGMENT_FINISH);
+    assert(runtime_state.current_segment_index == 0U);
+    assert(g_speed_targets[MOTOR_LF] == POINT_MOVE_MIN_EFFECTIVE_MMPS);
+}
+
+static void test_completed_segment_snaps_odometry_to_grid_target(void)
+{
+    motion_exec_runtime_state_t runtime_state;
+    MotionPlan manual_plan;
+
+    reset_test_state();
+    memset(&manual_plan, 0, sizeof(manual_plan));
+    manual_plan.count = 2U;
+    manual_plan.data[0].type = SEG_WALK;
+    manual_plan.data[0].dir = DIR_RIGHT;
+    manual_plan.data[0].cells = 1U;
+    manual_plan.data[1].type = SEG_WALK;
+    manual_plan.data[1].dir = DIR_LEFT;
+    manual_plan.data[1].cells = 1U;
+
+    motion_exec_init();
+    motion_exec_load_manual_plan(&manual_plan, ODOM_START_GRID_X, ODOM_START_GRID_Y);
+    motion_exec_request_start();
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    g_odometry_x_mm = g_odometry_target_x_mm - DEBUG_EXEC_SEGMENT_ACCEPT_TOL_MM;
+    g_odometry_y_mm = g_odometry_target_y_mm;
+    g_odometry_move_state = MOVE_STATE_RUNNING;
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    assert(g_odometry_x_mm == ((ODOM_START_GRID_X + 1) * FIELD_GRID_CELL_MM + FIELD_GRID_CELL_MM / 2));
+    assert(g_odometry_y_mm == ODOM_START_Y_MM);
+
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    assert(motion_exec_runtime_state_copy(&runtime_state));
+    assert(runtime_state.current_segment_index == 1U);
+    assert(runtime_state.current_segment.dir == DIR_LEFT);
+    assert(runtime_state.segment_target_x_mm == ODOM_START_X_MM);
+    assert(g_odometry_target_x_mm == ODOM_START_X_MM);
+    assert(g_odometry_target_x_mm - g_odometry_x_mm == -FIELD_GRID_CELL_MM);
+}
+
+static void test_near_target_dwell_accepts_sticky_segment(void)
+{
+    motion_exec_runtime_state_t runtime_state;
+    MotionPlan manual_plan;
+
+    reset_test_state();
+    memset(&manual_plan, 0, sizeof(manual_plan));
+    manual_plan.count = 1U;
+    manual_plan.data[0].type = SEG_WALK;
+    manual_plan.data[0].dir = DIR_RIGHT;
+    manual_plan.data[0].cells = 1U;
+
+    g_test_point_vx_cmd_mmps = 0;
+    g_test_point_vy_cmd_mmps = 0;
+
+    motion_exec_init();
+    motion_exec_load_manual_plan(&manual_plan, ODOM_START_GRID_X, ODOM_START_GRID_Y);
+    motion_exec_request_start();
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    g_odometry_x_mm = g_odometry_target_x_mm - EXEC_SEGMENT_NEAR_ACCEPT_TOL_MM;
+    g_odometry_y_mm = g_odometry_target_y_mm;
+    g_odometry_move_state = MOVE_STATE_RUNNING;
+
+    for(int i = 0; i < ((EXEC_SEGMENT_NEAR_ACCEPT_MS / EXEC_CONTROL_PERIOD_MS) + 2); i++)
+    {
+        motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+    }
+
+    assert(motion_exec_runtime_state_copy(&runtime_state));
+    assert(runtime_state.current_segment_index == 1U);
+    assert(runtime_state.phase == CAR_STATE_PLAN_DONE);
+    assert(runtime_state.plan_finished == 1U);
+    assert(g_odometry_x_mm == g_odometry_target_x_mm);
 }
 
 static void test_sustained_saturation_scales_body_command_next_cycle(void)
@@ -583,10 +724,10 @@ static void test_heading_correction_does_not_dominate_lateral_translation(void)
     motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
     motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
 
-    assert(g_speed_targets[MOTOR_LF] <= 125);
-    assert(g_speed_targets[MOTOR_RF] >= -125);
-    assert(g_speed_targets[MOTOR_LB] >= -75);
-    assert(g_speed_targets[MOTOR_RB] <= 75);
+    assert(g_speed_targets[MOTOR_LF] <= 100 + EXEC_YAW_VZ_LIMIT);
+    assert(g_speed_targets[MOTOR_RF] >= -100 - EXEC_YAW_VZ_LIMIT);
+    assert(g_speed_targets[MOTOR_LB] >= -100 + EXEC_YAW_VZ_LIMIT);
+    assert(g_speed_targets[MOTOR_RB] <= 100 - EXEC_YAW_VZ_LIMIT);
 }
 
 int main(void)
@@ -594,6 +735,9 @@ int main(void)
     test_motion_exec_init_resets_speed_pid_once();
     test_rotate_segment_is_not_rejected();
     test_manual_plan_load_bypasses_bfs_wait_states();
+    test_manual_debug_mode_does_not_accept_segment_at_default_tolerance();
+    test_completed_segment_snaps_odometry_to_grid_target();
+    test_near_target_dwell_accepts_sticky_segment();
     test_sustained_saturation_scales_body_command_next_cycle();
     test_command_scale_keeps_translation_above_effective_motion_threshold();
     test_heading_correction_does_not_dominate_lateral_translation();

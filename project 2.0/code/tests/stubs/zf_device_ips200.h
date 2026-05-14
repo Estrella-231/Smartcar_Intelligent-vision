@@ -9,6 +9,7 @@
 #define RGB565_BLUE         (0x001F)
 #define RGB565_BLACK        (0x0000)
 #define RGB565_GREEN        (0x07E0)
+#define RGB565_YELLOW       (0xFFE0)
 
 #define IPS200_CROSSWISE    (0)
 #define IPS200_TYPE_SPI     (0)

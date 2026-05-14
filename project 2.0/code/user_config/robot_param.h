@@ -30,7 +30,7 @@
 //
 // Current value is provisional. Recalibrate it on the real chassis:
 // PULSE_PER_MM = average_encoder_pulses / measured_travel_mm.
-#define PULSE_PER_MM             (7.7f)
+#define PULSE_PER_MM             (10.3f)
 
 // Raw int16 encoder-count boundaries for one hardware read. These are not the
 // encoder resolution and should not be used to wrap software-accumulated pos_now.
@@ -41,9 +41,6 @@
 #define ROTATE_ZERO_OFFSET       (20)
 
 /************************ Speed loop ************************/
-#define SPEED_PID_KP             (0.25f)
-#define SPEED_PID_KI             (0.08f)
-#define SPEED_PID_KD             (0.01f)
 #define SPEED_PID_I_LIMIT        (30.0f)
 
 #define SPEED_FILTER_FACTOR      (9)
@@ -75,9 +72,6 @@
 #define ROTATE_DEAD_ZONE         (50)
 
 /************************ Angle loop ************************/
-#define ANGLE_PID_KP             (0.5)
-#define ANGLE_PID_KI             (0.02)
-#define ANGLE_PID_KD             (0.1)
 #define ANGLE_PID_I_LIMIT        (80000)
 
 #define ANGLE_MAX_OUTPUT         (6000)
@@ -113,7 +107,7 @@
 #define EXEC_AUTO_START_FOR_TEST         (1)
 
 // Motion-segment wait handling.
-#define EXEC_WAIT_SEGMENT_DEFAULT_MS     (300)
+#define EXEC_WAIT_SEGMENT_DEFAULT_MS     (100)
 
 // Push segments reuse the same point-move controller but with lower speed caps.
 #define POINT_MOVE_PUSH_SPEED_SCALE_PCT       (70)
@@ -124,15 +118,21 @@
 #define SMARTCAR_MODE_MANUAL_RECT_LAP         (1)
 #define SMARTCAR_MODE_BFS_FIXED_MAP           (2)
 #define SMARTCAR_MODE_OPENART_BFS             (3)
+#define SMARTCAR_MODE_PULSE_CAL_3200          (4)
 
-// Default bring-up path: bypass BFS and validate chassis + odometry first.
-#define SMARTCAR_RUNTIME_MODE                 (SMARTCAR_MODE_MANUAL_RECT_LAP)
+// Fixed-map bring-up path: use the built-in stage1 ASCII map and execute BFS output.
+#define SMARTCAR_RUNTIME_MODE                 (SMARTCAR_MODE_BFS_FIXED_MAP)
 
 // Manual-lap debug mode uses tighter completion thresholds so the car does not
 // stop one half-cell early during calibration runs.
 #define DEBUG_EXEC_SEGMENT_ACCEPT_TOL_MM      (20)
 #define DEBUG_POINT_MOVE_FINISH_TOL_MM        (20)
 #define DEBUG_TELEMETRY_PAGE_PERIOD_MS        (1000U)
+
+// If the chassis is close to a grid target but cannot settle the final few cm,
+// accept the segment after a short dwell and snap odometry to the target cell.
+#define EXEC_SEGMENT_NEAR_ACCEPT_TOL_MM       (45)
+#define EXEC_SEGMENT_NEAR_ACCEPT_MS           (500)
 
 /************************ Round-2 odometry ************************/
 // Scale factors used after field calibration. Leave at 1.0 until measured.

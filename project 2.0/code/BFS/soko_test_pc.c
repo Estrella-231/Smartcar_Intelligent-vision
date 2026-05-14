@@ -131,6 +131,22 @@ static const char g_stage1_complex_map[MAP_H][MAP_W + 1] =
 	"################"
 };
 
+static const char g_fixed_stage1_bridge_map[MAP_H][MAP_W + 1] =
+{
+	"################",
+	"#--------------#",
+	"#--------------#",
+	"#--------------#",
+	"#------$-..----#",
+	"#--------------#",
+	"#@-----$-------#",
+	"#--------------#",
+	"#--------------#",
+	"#--------------#",
+	"#--------------#",
+	"################"
+};
+
 static void soko_test_print_actions(const ActionSeq *seq)
 {
 	uint16_t i;
@@ -368,6 +384,64 @@ static int soko_test_stage1_complex_case(void)
 	return 0;
 }
 
+static int soko_test_fixed_stage1_bridge_case(void)
+{
+	GameMap map;
+	GameMap replay_map;
+	ActionSeq seq;
+	MotionPlan plan;
+	MotionParam param;
+	SokoReplayResult replay_result;
+	SokoStatus status;
+
+	status = soko_map_parse_ascii(g_fixed_stage1_bridge_map, &map);
+	if(SOKO_OK != status)
+	{
+		printf("[FAIL] fixed stage1 parse status=%d\n", status);
+		return 1;
+	}
+
+	soko_map_copy(&replay_map, &map);
+	status = soko_plan_stage1_greedy(&map, &seq);
+	if(SOKO_OK != status)
+	{
+		printf("[FAIL] fixed stage1 plan status=%d\n", status);
+		return 1;
+	}
+
+	status = soko_replay_apply_sequence(&replay_map, &seq, &replay_result);
+	if(SOKO_OK != status)
+	{
+		printf("[FAIL] fixed stage1 replay status=%d\n", status);
+		return 1;
+	}
+
+	if((0 != replay_map.box_count) || (0 != replay_map.target_count))
+	{
+		printf("[FAIL] fixed stage1 final map mismatch box=%u target=%u\n",
+			   replay_map.box_count,
+			   replay_map.target_count);
+		return 1;
+	}
+
+	soko_motion_param_set_default(&param);
+	status = soko_motion_compress_actions(&seq, &plan, &param);
+	if(SOKO_OK != status)
+	{
+		printf("[FAIL] fixed stage1 motion status=%d\n", status);
+		return 1;
+	}
+
+	printf("[PASS] fixed stage1 bridge actions=%u segments=%u replay_steps=%u pushes=%u\n",
+		   seq.count,
+		   plan.count,
+		   replay_result.steps,
+		   replay_result.pushes);
+	printf("       sequence=");
+	soko_test_print_actions(&seq);
+	return 0;
+}
+
 static int soko_test_stage2_case(void)
 {
 	GameMap map;
@@ -584,6 +658,7 @@ int main(void)
 	fail_count += soko_test_deadlock_case();
 	fail_count += soko_test_stage1_case();
 	fail_count += soko_test_stage1_complex_case();
+	fail_count += soko_test_fixed_stage1_bridge_case();
 	fail_count += soko_test_stage2_case();
 	fail_count += soko_test_stage3_case();
 	fail_count += soko_test_motion_adapter_case();

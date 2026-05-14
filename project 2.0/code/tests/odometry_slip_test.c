@@ -165,7 +165,7 @@ static void test_finish_tolerance_cannot_be_smaller_than_axis_stop_deadband(void
            MOVE_STATE_FINISH);
 }
 
-static void test_near_target_command_stays_above_effective_motion_threshold(void)
+static void test_near_target_command_settles_below_effective_motion_threshold(void)
 {
     int32_t vx_cmd_mmps = 0;
     int32_t vy_cmd_mmps = 0;
@@ -173,6 +173,26 @@ static void test_near_target_command_stays_above_effective_motion_threshold(void
     reset_test_state();
     odometry_set_finish_tolerance_mm(POINT_MOVE_AXIS_STOP_TOL_MM);
     odometry_set_target_point(80, 0);
+
+    for(int i = 0; i < 4; i++)
+    {
+        assert(odometry_update_point_move_command(&vx_cmd_mmps, &vy_cmd_mmps) ==
+               MOVE_STATE_RUNNING);
+    }
+
+    assert(vx_cmd_mmps >= POINT_MOVE_MIN_EFFECTIVE_MMPS);
+    assert(vx_cmd_mmps <= POINT_MOVE_NEAR_MAX_SPEED_MMPS);
+    assert(vy_cmd_mmps == 0);
+}
+
+static void test_far_target_command_keeps_effective_motion_threshold(void)
+{
+    int32_t vx_cmd_mmps = 0;
+    int32_t vy_cmd_mmps = 0;
+
+    reset_test_state();
+    odometry_set_finish_tolerance_mm(POINT_MOVE_AXIS_STOP_TOL_MM);
+    odometry_set_target_point(120, 0);
 
     for(int i = 0; i < 4; i++)
     {
@@ -256,7 +276,8 @@ int main(void)
     test_slip_weight_is_continuous_between_soft_and_hard_error();
     test_slip_detection_uses_ramped_target_not_raw_target();
     test_finish_tolerance_cannot_be_smaller_than_axis_stop_deadband();
-    test_near_target_command_stays_above_effective_motion_threshold();
+    test_near_target_command_settles_below_effective_motion_threshold();
+    test_far_target_command_keeps_effective_motion_threshold();
     test_static_gate_suppresses_noise_when_chassis_idle();
     test_static_gate_keeps_integrating_when_target_nonzero();
 

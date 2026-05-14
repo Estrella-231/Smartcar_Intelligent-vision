@@ -52,6 +52,8 @@ int32_t angle_pid_calc_output(int32_t target_angle_cd,
  */
 int32_t angle_pid_get_error(void);
 int32_t angle_pid_get_output(void);
+void angle_pid_set_params(float kp, float ki, float kd, float out_max);
+void angle_pid_get_params(float *kp, float *ki, float *kd, float *out_max);
 
 /*
  * Compatibility interfaces for the older direct-rotation code path.

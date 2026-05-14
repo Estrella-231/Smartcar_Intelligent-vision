@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define REPORTER_CHANNELS  18
+#define REPORTER_CHANNELS  22
 
 typedef union {
     float    f32;

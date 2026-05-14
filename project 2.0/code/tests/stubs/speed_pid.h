@@ -14,5 +14,9 @@ int32_t speed_pid_get_target_ramped(MotorID motor_id);
 int32_t speed_pid_get_error(MotorID motor_id);
 int32_t speed_pid_get_output(MotorID motor_id);
 int32_t speed_pid_get_output_limit(MotorID motor_id);
+void speed_pid_stall_protection_init(void);
+void speed_pid_stall_protection_tick(uint32_t period_ms);
+uint8_t speed_pid_is_stalled(MotorID motor_id);
+uint8_t speed_pid_any_motor_stalled(void);
 
 #endif

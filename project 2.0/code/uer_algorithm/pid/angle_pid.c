@@ -7,6 +7,10 @@ int32_t rotate_finish_flag = 0;
 int32_t wheel_pwm[MOTOR_MAX] = {0};
 Rotate_State_Type g_rot_state = ROT_STATE_IDLE;
 
+static float g_heading_hold_kp = 0.35f;
+static float g_heading_hold_gyro_damping = 0.018f;
+static int32_t g_heading_hold_output_limit = ANGLE_MAX_OUTPUT;
+
 /*
  * Normalize a heading difference into the range [-18000, 18000] centi-degrees.
  *
@@ -114,9 +118,6 @@ int32_t angle_pid_calc_output(int32_t target_angle_cd,
     const int32_t heading_hold_output_deadband = 15;
     // Maximum output change at EXEC_CONTROL_PERIOD_MS; scaled for other periods.
     const int32_t heading_hold_output_step_limit = 25;
-    const float heading_hold_kp = 0.35f;
-    const float heading_hold_gyro_damping = 0.018f;
-
     if(period_ms == 0)
     {
         return 0;
@@ -149,8 +150,8 @@ int32_t angle_pid_calc_output(int32_t target_angle_cd,
      * signal we need for damping.
      */
     gyro_z_cdps = imu_get_gyro_z_cdps();
-    raw_output = (int32_t)(heading_hold_kp * (float)g_angle.err -
-                           heading_hold_gyro_damping * (float)gyro_z_cdps);
+    raw_output = (int32_t)(g_heading_hold_kp * (float)g_angle.err -
+                           g_heading_hold_gyro_damping * (float)gyro_z_cdps);
 
     if(abs(raw_output) < heading_hold_output_deadband)
     {
@@ -174,7 +175,7 @@ int32_t angle_pid_calc_output(int32_t target_angle_cd,
     }
 
     g_angle.integral = 0;
-    g_angle.output = LIMIT_ABS(raw_output, ANGLE_MAX_OUTPUT);
+    g_angle.output = LIMIT_ABS(raw_output, g_heading_hold_output_limit);
     g_angle.last_error = g_angle.err;
     g_angle.last_output = g_angle.output;
 
@@ -189,6 +190,38 @@ int32_t angle_pid_get_error(void)
 int32_t angle_pid_get_output(void)
 {
     return g_angle.output;
+}
+
+void angle_pid_set_params(float kp, float ki, float kd, float out_max)
+{
+    (void)ki;
+
+    g_heading_hold_kp = kp;
+    g_heading_hold_gyro_damping = kd;
+    if(out_max > 0.0f)
+    {
+        g_heading_hold_output_limit = (int32_t)out_max;
+    }
+}
+
+void angle_pid_get_params(float *kp, float *ki, float *kd, float *out_max)
+{
+    if(kp != (void *)0)
+    {
+        *kp = g_heading_hold_kp;
+    }
+    if(ki != (void *)0)
+    {
+        *ki = 0.0f;
+    }
+    if(kd != (void *)0)
+    {
+        *kd = g_heading_hold_gyro_damping;
+    }
+    if(out_max != (void *)0)
+    {
+        *out_max = (float)g_heading_hold_output_limit;
+    }
 }
 
 /*

@@ -102,6 +102,7 @@
   ..\code\user_business\robot_control.h ..\code\BFS\soko_types.h \
   ..\code\uer_algorithm\pid\speed_pid.h \
   ..\code\user_business\state_machine.h \
-  ..\code\user_business\debug_runtime.h ..\code\BFS\soko_map.h \
+  ..\code\user_business\debug_runtime.h \
+  ..\code\user_business\pulse_calibration_mode.h ..\code\BFS\soko_map.h \
   ..\code\BFS\soko_motion_adapter.h ..\code\BFS\soko_replay.h \
   ..\code\BFS\soko_stage1.h ..\code\user_monitor\monitor.h

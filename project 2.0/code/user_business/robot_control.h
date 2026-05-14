@@ -40,6 +40,7 @@ int32_t motion_exec_get_command_scale_pct(void);
  * - the current segment target point while a segment is running
  */
 void motion_display_init(void);
+void motion_display_set_map_objects(const GameMap *map);
 void motion_display_tick(void);
 
 #endif // ROBOT_CONTROL_H

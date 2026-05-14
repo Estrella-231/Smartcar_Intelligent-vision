@@ -228,23 +228,22 @@ static int32_t odometry_axis_error_to_cmd_mmps(int32_t axis_error_mm)
     {
         axis_cmd_mmps = LIMIT_ABS(axis_cmd_mmps, near_max_speed_mmps);
 
-        if(abs_error_mm > g_point_move_finish_tol_mm)
+        /*
+         * Keep the command out of the known low-speed ineffective region.
+         *
+         * Why this is needed:
+         * - the current chassis and speed-loop tuning were validated around a
+         *   relatively high wheel target
+         * - if point-move commands become too small, the real motion becomes
+         *   sticky, uneven, and prone to twitch
+         */
+        if(axis_cmd_mmps > 0 && axis_cmd_mmps < min_effective_mmps)
         {
-            int32_t near_min_effective_mmps = min_effective_mmps;
-
-            if(near_min_effective_mmps > near_max_speed_mmps)
-            {
-                near_min_effective_mmps = near_max_speed_mmps;
-            }
-
-            if(axis_cmd_mmps > 0 && axis_cmd_mmps < near_min_effective_mmps)
-            {
-                axis_cmd_mmps = near_min_effective_mmps;
-            }
-            else if(axis_cmd_mmps < 0 && axis_cmd_mmps > -near_min_effective_mmps)
-            {
-                axis_cmd_mmps = -near_min_effective_mmps;
-            }
+            axis_cmd_mmps = min_effective_mmps;
+        }
+        else if(axis_cmd_mmps < 0 && axis_cmd_mmps > -min_effective_mmps)
+        {
+            axis_cmd_mmps = -min_effective_mmps;
         }
     }
 

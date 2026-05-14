@@ -1,7 +1,7 @@
 /**
  * @file    data_reporter.c
- * @brief   数据上报器实现 - 周期性打包并上报18通道浮点数据
- * @details 序列化格式: [ch_count:u8][ch0_f32][ch1_f32]...[ch17_f32]，小端序
+ * @brief   数据上报器实现 - 周期性打包并上报22通道浮点数据
+ * @details 序列化格式: [ch_count:u8][ch0_f32][ch1_f32]...[ch21_f32]，小端序
  *          通过 protocol_pack 打包为完整通信帧
  * @version 1.0
  */
@@ -51,7 +51,7 @@ void reporter_enable(data_reporter_t *reporter, uint8_t enable, uint16_t interva
 
 uint16_t reporter_get_frame(data_reporter_t *reporter, proto_ctx_t *proto_ctx, uint32_t sys_tick_ms)
 {
-    uint8_t  data_buf[1 + REPORTER_CHANNELS * 4];  /* 1字节通道数 + 18*4字节float */
+    uint8_t  data_buf[1 + REPORTER_CHANNELS * 4];  /* 1字节通道数 + 22*4字节float */
     uint16_t pos = 0;
     uint8_t  i;
 

@@ -14,7 +14,11 @@
 #include "state_machine.h"
 #include "zf_device_ips200.h"
 
+#include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
+
+extern uint32_t ble6a20_send_string(const char *str);
 
 /*
  * Current business-layer rotation wrapper.
@@ -81,9 +85,11 @@ static uint8_t g_segment_target_grid_y = 0;
 static int32_t g_motion_exec_target_yaw_cd = EXEC_YAW_TARGET_CD;
 static uint8_t g_motion_exec_rotate_stable_count = 0U;
 static int32_t g_motion_exec_segment_accept_tol_mm = EXEC_SEGMENT_ACCEPT_TOL_MM;
+static uint32_t g_motion_exec_near_accept_elapsed_ms = 0U;
 static int32_t g_motion_exec_command_scale_pct = 100;
 static uint8_t g_motion_exec_bad_track_count = 0U;
 static uint8_t g_motion_exec_healthy_track_count = 0U;
+static bfs_runtime_state_t g_motion_exec_bfs_state_snapshot = {0};
 
 #define MOTION_DISPLAY_WIDTH_PX              (320)
 #define MOTION_DISPLAY_HEIGHT_PX             (240)
@@ -92,12 +98,26 @@ static uint8_t g_motion_exec_healthy_track_count = 0U;
 #define MOTION_DISPLAY_BG_COLOR              (RGB565_WHITE)
 #define MOTION_DISPLAY_CAR_COLOR             (RGB565_RED)
 #define MOTION_DISPLAY_TARGET_COLOR          (RGB565_BLUE)
+#define MOTION_DISPLAY_BOX_COLOR             (RGB565_YELLOW)
+#define MOTION_DISPLAY_MAP_TARGET_COLOR      (RGB565_GREEN)
 #define MOTION_DISPLAY_CAR_RADIUS_PX         (3)
 #define MOTION_DISPLAY_TARGET_RADIUS_PX      (2)
+#define MOTION_DISPLAY_BOX_RADIUS_PX         (4)
+#define MOTION_DISPLAY_MAP_TARGET_RADIUS_PX  (5)
 #define MOTION_DISPLAY_SELF_TEST_ENABLE      (1)
 #define MOTION_DISPLAY_SELF_TEST_DELAY_MS    (180)
 
+typedef struct
+{
+    uint8_t x;
+    uint8_t y;
+} motion_display_grid_point_t;
+
 static uint8_t g_motion_display_initialized = 0U;
+static motion_display_grid_point_t g_motion_display_boxes[MAX_BOXES];
+static uint8_t g_motion_display_box_count = 0U;
+static motion_display_grid_point_t g_motion_display_targets[MAX_TARGETS];
+static uint8_t g_motion_display_target_count = 0U;
 static int16_t g_last_car_px = -1;
 static int16_t g_last_car_py = -1;
 static int16_t g_last_target_px = -1;
@@ -107,6 +127,42 @@ static uint8_t g_motion_display_skip_divider = 0U;
 
 /* Forward declarations for static functions */
 static void motion_exec_enter_error(exec_error_t error_code);
+
+static const char *motion_exec_segment_type_name(SegmentType type)
+{
+    switch(type)
+    {
+        case SEG_WALK: return "WALK";
+        case SEG_PUSH: return "PUSH";
+        case SEG_ROTATE: return "ROT";
+        case SEG_WAIT: return "WAIT";
+        default: return "UNK";
+    }
+}
+
+static const char *motion_exec_dir_name(Dir dir)
+{
+    switch(dir)
+    {
+        case DIR_UP: return "U";
+        case DIR_DOWN: return "D";
+        case DIR_LEFT: return "L";
+        case DIR_RIGHT: return "R";
+        default: return "?";
+    }
+}
+
+static void motion_exec_log_line(const char *format, ...)
+{
+    char line_buffer[128];
+    va_list args;
+
+    memset(line_buffer, 0, sizeof(line_buffer));
+    va_start(args, format);
+    vsnprintf(line_buffer, sizeof(line_buffer), format, args);
+    va_end(args);
+    ble6a20_send_string(line_buffer);
+}
 
 static void motion_display_run_power_on_self_test(void)
 {
@@ -338,6 +394,112 @@ static void motion_display_draw_target_marker(int16_t center_x_px, int16_t cente
     }
 }
 
+static void motion_display_grid_to_pixel(uint8_t grid_x,
+                                         uint8_t grid_y,
+                                         int16_t *x_px,
+                                         int16_t *y_px)
+{
+    int32_t x_mm;
+    int32_t y_mm;
+
+    if((0 == x_px) || (0 == y_px))
+    {
+        return;
+    }
+
+    x_mm = ((int32_t)grid_x * FIELD_GRID_CELL_MM) + (FIELD_GRID_CELL_MM / 2);
+    y_mm = ((int32_t)grid_y * FIELD_GRID_CELL_MM) + (FIELD_GRID_CELL_MM / 2);
+    motion_display_mm_to_pixel(x_mm, y_mm, x_px, y_px);
+}
+
+static void motion_display_draw_box_marker(int16_t center_x_px, int16_t center_y_px)
+{
+    for(int16_t y_px = center_y_px - MOTION_DISPLAY_BOX_RADIUS_PX;
+        y_px <= center_y_px + MOTION_DISPLAY_BOX_RADIUS_PX;
+        y_px++)
+    {
+        for(int16_t x_px = center_x_px - MOTION_DISPLAY_BOX_RADIUS_PX;
+            x_px <= center_x_px + MOTION_DISPLAY_BOX_RADIUS_PX;
+            x_px++)
+        {
+            if((x_px >= 0) && (x_px < MOTION_DISPLAY_WIDTH_PX) &&
+               (y_px >= 0) && (y_px < MOTION_DISPLAY_HEIGHT_PX))
+            {
+                ips200_draw_point((uint16_t)x_px, (uint16_t)y_px, MOTION_DISPLAY_BOX_COLOR);
+            }
+        }
+    }
+}
+
+static void motion_display_draw_map_target_marker(int16_t center_x_px, int16_t center_y_px)
+{
+    for(int16_t offset = -MOTION_DISPLAY_MAP_TARGET_RADIUS_PX;
+        offset <= MOTION_DISPLAY_MAP_TARGET_RADIUS_PX;
+        offset++)
+    {
+        int16_t left_x = center_x_px - MOTION_DISPLAY_MAP_TARGET_RADIUS_PX;
+        int16_t right_x = center_x_px + MOTION_DISPLAY_MAP_TARGET_RADIUS_PX;
+        int16_t top_y = center_y_px - MOTION_DISPLAY_MAP_TARGET_RADIUS_PX;
+        int16_t bottom_y = center_y_px + MOTION_DISPLAY_MAP_TARGET_RADIUS_PX;
+
+        if((left_x >= 0) && (left_x < MOTION_DISPLAY_WIDTH_PX) &&
+           ((center_y_px + offset) >= 0) && ((center_y_px + offset) < MOTION_DISPLAY_HEIGHT_PX))
+        {
+            ips200_draw_point((uint16_t)left_x,
+                              (uint16_t)(center_y_px + offset),
+                              MOTION_DISPLAY_MAP_TARGET_COLOR);
+        }
+
+        if((right_x >= 0) && (right_x < MOTION_DISPLAY_WIDTH_PX) &&
+           ((center_y_px + offset) >= 0) && ((center_y_px + offset) < MOTION_DISPLAY_HEIGHT_PX))
+        {
+            ips200_draw_point((uint16_t)right_x,
+                              (uint16_t)(center_y_px + offset),
+                              MOTION_DISPLAY_MAP_TARGET_COLOR);
+        }
+
+        if(((center_x_px + offset) >= 0) && ((center_x_px + offset) < MOTION_DISPLAY_WIDTH_PX) &&
+           (top_y >= 0) && (top_y < MOTION_DISPLAY_HEIGHT_PX))
+        {
+            ips200_draw_point((uint16_t)(center_x_px + offset),
+                              (uint16_t)top_y,
+                              MOTION_DISPLAY_MAP_TARGET_COLOR);
+        }
+
+        if(((center_x_px + offset) >= 0) && ((center_x_px + offset) < MOTION_DISPLAY_WIDTH_PX) &&
+           (bottom_y >= 0) && (bottom_y < MOTION_DISPLAY_HEIGHT_PX))
+        {
+            ips200_draw_point((uint16_t)(center_x_px + offset),
+                              (uint16_t)bottom_y,
+                              MOTION_DISPLAY_MAP_TARGET_COLOR);
+        }
+    }
+}
+
+static void motion_display_draw_map_objects(void)
+{
+    int16_t x_px;
+    int16_t y_px;
+
+    for(uint8_t i = 0U; i < g_motion_display_target_count; i++)
+    {
+        motion_display_grid_to_pixel(g_motion_display_targets[i].x,
+                                     g_motion_display_targets[i].y,
+                                     &x_px,
+                                     &y_px);
+        motion_display_draw_map_target_marker(x_px, y_px);
+    }
+
+    for(uint8_t i = 0U; i < g_motion_display_box_count; i++)
+    {
+        motion_display_grid_to_pixel(g_motion_display_boxes[i].x,
+                                     g_motion_display_boxes[i].y,
+                                     &x_px,
+                                     &y_px);
+        motion_display_draw_box_marker(x_px, y_px);
+    }
+}
+
 /*
  * Draw the static 16 x 12 field grid once after IPS200 init.
  *
@@ -427,6 +589,18 @@ static void motion_exec_reset_command_scale(void)
     g_motion_exec_command_scale_pct = 100;
     g_motion_exec_bad_track_count = 0U;
     g_motion_exec_healthy_track_count = 0U;
+}
+
+static void motion_exec_apply_runtime_tolerances(void)
+{
+#if (SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_MANUAL_RECT_LAP) || \
+    (SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_BFS_FIXED_MAP)
+    g_motion_exec_segment_accept_tol_mm = DEBUG_EXEC_SEGMENT_ACCEPT_TOL_MM;
+    odometry_set_finish_tolerance_mm(DEBUG_POINT_MOVE_FINISH_TOL_MM);
+#else
+    g_motion_exec_segment_accept_tol_mm = EXEC_SEGMENT_ACCEPT_TOL_MM;
+    odometry_set_finish_tolerance_mm(POINT_MOVE_FINISH_TOL_MM);
+#endif
 }
 
 static int32_t motion_exec_scale_command_value(int32_t value, int32_t scale_pct)
@@ -708,6 +882,7 @@ static uint8_t motion_exec_load_plan_common(const MotionPlan *plan,
     g_motion_exec_state.error_code = EXEC_ERROR_NONE;
     g_motion_exec_target_yaw_cd = EXEC_YAW_TARGET_CD;
     g_motion_exec_rotate_stable_count = 0U;
+    g_motion_exec_near_accept_elapsed_ms = 0U;
     g_motion_exec_state.source_plan_signature = source_plan_signature;
     g_motion_exec_state.current_segment_index = 0U;
     g_motion_exec_state.current_grid_x = start_grid_x;
@@ -753,6 +928,7 @@ static void motion_exec_start_next_segment(void)
     segment = &g_motion_exec_plan.data[g_motion_exec_state.current_segment_index];
     g_motion_exec_state.current_segment = *segment;
     g_motion_exec_state.segment_wait_remaining_ms = 0;
+    g_motion_exec_near_accept_elapsed_ms = 0U;
 
     switch(segment->type)
     {
@@ -799,6 +975,22 @@ static void motion_exec_start_next_segment(void)
             g_motion_exec_state.segment_target_x_mm = target_x_mm;
             g_motion_exec_state.segment_target_y_mm = target_y_mm;
             g_motion_exec_state.phase = CAR_STATE_WAIT_SEGMENT_FINISH;
+            motion_exec_log_line(
+                "EXEC start idx=%u %s %s%u grid=(%u,%u)->(%u,%u) odom=(%ld,%ld) tgt=(%ld,%ld) d=(%ld,%ld)\r\n",
+                g_motion_exec_state.current_segment_index,
+                motion_exec_segment_type_name(segment->type),
+                motion_exec_dir_name(segment->dir),
+                segment->cells,
+                g_motion_exec_state.current_grid_x,
+                g_motion_exec_state.current_grid_y,
+                g_segment_target_grid_x,
+                g_segment_target_grid_y,
+                (long)odometry_get_x_mm(),
+                (long)odometry_get_y_mm(),
+                (long)target_x_mm,
+                (long)target_y_mm,
+                (long)odometry_get_target_dx_mm(),
+                (long)odometry_get_target_dy_mm());
             break;
 
         case SEG_WAIT:
@@ -846,6 +1038,24 @@ static uint8_t motion_exec_segment_soft_finish_reached(void)
                      (abs(odometry_get_target_dy_mm()) <= g_motion_exec_segment_accept_tol_mm));
 }
 
+static uint8_t motion_exec_segment_near_finish_dwelled(uint32_t control_period_ms)
+{
+    if((abs(odometry_get_target_dx_mm()) <= EXEC_SEGMENT_NEAR_ACCEPT_TOL_MM) &&
+       (abs(odometry_get_target_dy_mm()) <= EXEC_SEGMENT_NEAR_ACCEPT_TOL_MM))
+    {
+        if(g_motion_exec_near_accept_elapsed_ms < EXEC_SEGMENT_NEAR_ACCEPT_MS)
+        {
+            g_motion_exec_near_accept_elapsed_ms += control_period_ms;
+        }
+    }
+    else
+    {
+        g_motion_exec_near_accept_elapsed_ms = 0U;
+    }
+
+    return (uint8_t)(g_motion_exec_near_accept_elapsed_ms >= EXEC_SEGMENT_NEAR_ACCEPT_MS);
+}
+
 void motion_exec_init(void)
 {
     memset(&g_motion_exec_state, 0, sizeof(g_motion_exec_state));
@@ -862,10 +1072,11 @@ void motion_exec_init(void)
     g_segment_target_grid_y = 0U;
     g_motion_exec_target_yaw_cd = EXEC_YAW_TARGET_CD;
     g_motion_exec_rotate_stable_count = 0U;
-    g_motion_exec_segment_accept_tol_mm = EXEC_SEGMENT_ACCEPT_TOL_MM;
+    g_motion_exec_near_accept_elapsed_ms = 0U;
     motion_exec_reset_command_scale();
 
     odometry_init(ODOM_START_X_MM, ODOM_START_Y_MM);
+    motion_exec_apply_runtime_tolerances();
     angle_pid_reset_state();
     speed_pid_stall_protection_init();
     motion_exec_stop_chassis();
@@ -926,7 +1137,7 @@ void motion_exec_set_segment_accept_tolerance_mm(int32_t tolerance_mm)
 
 void motion_exec_tick(uint32_t control_period_ms)
 {
-    bfs_runtime_state_t bfs_state;
+    bfs_runtime_state_t *bfs_state = &g_motion_exec_bfs_state_snapshot;
     int32_t vx_cmd_mmps = 0;
     int32_t vy_cmd_mmps = 0;
 
@@ -937,9 +1148,9 @@ void motion_exec_tick(uint32_t control_period_ms)
 
     motion_exec_update_feedback(control_period_ms);
 
-    if(!bfs_runtime_state_copy(&bfs_state))
+    if(!bfs_runtime_state_copy(bfs_state))
     {
-        memset(&bfs_state, 0, sizeof(bfs_state));
+        memset(bfs_state, 0, sizeof(*bfs_state));
     }
 
     switch(g_motion_exec_state.phase)
@@ -955,7 +1166,7 @@ void motion_exec_tick(uint32_t control_period_ms)
             {
                 g_motion_exec_state.phase = CAR_STATE_WAIT_START;
             }
-            else if(bfs_state.has_filtered_map)
+            else if(bfs_state->has_filtered_map)
             {
                 g_motion_exec_state.phase = CAR_STATE_WAIT_BFS;
             }
@@ -968,26 +1179,26 @@ void motion_exec_tick(uint32_t control_period_ms)
             {
                 g_motion_exec_state.phase = CAR_STATE_WAIT_START;
             }
-            else if(bfs_state.has_plan &&
-                    (bfs_state.phase == BFS_RUNTIME_PLAN_OK) &&
-                    (bfs_state.last_plan_status == SOKO_OK))
+            else if(bfs_state->has_plan &&
+                    (bfs_state->phase == BFS_RUNTIME_PLAN_OK) &&
+                    (bfs_state->last_plan_status == SOKO_OK))
             {
                 g_motion_exec_state.phase = CAR_STATE_LOAD_PLAN;
             }
             break;
 
         case CAR_STATE_LOAD_PLAN:
-            if(!bfs_state.has_plan || (bfs_state.last_plan_status != SOKO_OK))
+            if(!bfs_state->has_plan || (bfs_state->last_plan_status != SOKO_OK))
             {
                 motion_exec_enter_error(EXEC_ERROR_NO_BFS_PLAN);
                 return;
             }
 
             g_motion_exec_manual_plan_active = 0U;
-            if(!motion_exec_load_plan_common(&bfs_state.last_motion_plan,
-                                             bfs_state.player_x,
-                                             bfs_state.player_y,
-                                             bfs_state.planned_map_signature))
+            if(!motion_exec_load_plan_common(&bfs_state->last_motion_plan,
+                                             bfs_state->player_x,
+                                             bfs_state->player_y,
+                                             bfs_state->planned_map_signature))
             {
                 return;
             }
@@ -1030,6 +1241,7 @@ void motion_exec_tick(uint32_t control_period_ms)
             else
             {
                 if(motion_exec_segment_soft_finish_reached() ||
+                   motion_exec_segment_near_finish_dwelled(control_period_ms) ||
                    (odometry_update_point_move_command(&vx_cmd_mmps, &vy_cmd_mmps) == MOVE_STATE_FINISH))
                 {
                     /*
@@ -1043,6 +1255,20 @@ void motion_exec_tick(uint32_t control_period_ms)
                      * much more stable for the current tuning stage.
                      */
                     motion_exec_stop_chassis();
+                    motion_exec_log_line(
+                        "EXEC done idx=%u %s %s%u odom=(%ld,%ld) tgt=(%ld,%ld) d=(%ld,%ld)\r\n",
+                        g_motion_exec_state.current_segment_index,
+                        motion_exec_segment_type_name(g_motion_exec_state.current_segment.type),
+                        motion_exec_dir_name(g_motion_exec_state.current_segment.dir),
+                        g_motion_exec_state.current_segment.cells,
+                        (long)odometry_get_x_mm(),
+                        (long)odometry_get_y_mm(),
+                        (long)g_motion_exec_state.segment_target_x_mm,
+                        (long)g_motion_exec_state.segment_target_y_mm,
+                        (long)odometry_get_target_dx_mm(),
+                        (long)odometry_get_target_dy_mm());
+                    odometry_reset_pose(g_motion_exec_state.segment_target_x_mm,
+                                        g_motion_exec_state.segment_target_y_mm);
                     g_motion_exec_state.current_grid_x = g_segment_target_grid_x;
                     g_motion_exec_state.current_grid_y = g_segment_target_grid_y;
                     g_motion_exec_state.current_segment_index++;
@@ -1101,6 +1327,7 @@ void motion_display_init(void)
     motion_display_run_power_on_self_test();
 
     motion_display_draw_static_grid();
+    motion_display_draw_map_objects();
 
     g_motion_display_initialized = 1U;
     g_last_car_px = -1;
@@ -1109,6 +1336,43 @@ void motion_display_init(void)
     g_last_target_py = -1;
     g_last_target_valid = 0U;
     g_motion_display_skip_divider = 0U;
+}
+
+void motion_display_set_map_objects(const GameMap *map)
+{
+    if(0 == map)
+    {
+        g_motion_display_box_count = 0U;
+        g_motion_display_target_count = 0U;
+    }
+    else
+    {
+        g_motion_display_box_count = (map->box_count > MAX_BOXES) ? MAX_BOXES : map->box_count;
+        g_motion_display_target_count = (map->target_count > MAX_TARGETS) ? MAX_TARGETS : map->target_count;
+
+        for(uint8_t i = 0U; i < g_motion_display_box_count; i++)
+        {
+            g_motion_display_boxes[i].x = map->boxes[i].pos.x;
+            g_motion_display_boxes[i].y = map->boxes[i].pos.y;
+        }
+
+        for(uint8_t i = 0U; i < g_motion_display_target_count; i++)
+        {
+            g_motion_display_targets[i].x = map->targets[i].pos.x;
+            g_motion_display_targets[i].y = map->targets[i].pos.y;
+        }
+    }
+
+    if(g_motion_display_initialized)
+    {
+        motion_display_draw_static_grid();
+        motion_display_draw_map_objects();
+        g_last_car_px = -1;
+        g_last_car_py = -1;
+        g_last_target_px = -1;
+        g_last_target_py = -1;
+        g_last_target_valid = 0U;
+    }
 }
 
 void motion_display_tick(void)
@@ -1166,6 +1430,8 @@ void motion_display_tick(void)
                                      g_last_target_py,
                                      MOTION_DISPLAY_TARGET_RADIUS_PX + 1);
     }
+
+    motion_display_draw_map_objects();
 
     if(target_valid)
     {

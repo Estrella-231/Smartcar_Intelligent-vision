@@ -1,15 +1,15 @@
 #include "speed_pid.h"
-#include "robot_param.h"
-#include "motor_driver.h"
 
 #include <stdlib.h>
 
+
 PID_Pram_t g_speed_pid[MOTOR_MAX] =
 {
-    {
-        .kp = 1.5f, .ki = 0.05f, .kd = 0.0f, .kf = 1.8f,
+
+	{
+        .kp = 1.8f, .ki = 0.25f, .kd = 0.0f, .kf = 1.8f,
         .i_limit = 220,
-        .output_limit = 850,
+        .output_limit = 650,
         .min_effect_pwm_fwd = 70, .min_effect_pwm_rev = 75,
         .integral_full_error = 50, .integral_half_error = 120,
         .target_step_limit = 20,
@@ -25,9 +25,9 @@ PID_Pram_t g_speed_pid[MOTOR_MAX] =
         .stall_state = {0}
     },
     {
-        .kp = 1.5f, .ki = 0.05f, .kd = 0.0f, .kf = 1.8f,
+        .kp = 1.8f, .ki = 0.25f, .kd = 0.0f, .kf = 1.8f,
         .i_limit = 220,
-        .output_limit = 850,
+        .output_limit = 650,
         .min_effect_pwm_fwd = 70, .min_effect_pwm_rev = 75,
         .integral_full_error = 50, .integral_half_error = 120,
         .target_step_limit = 20,
@@ -43,9 +43,9 @@ PID_Pram_t g_speed_pid[MOTOR_MAX] =
         .stall_state = {0}
     },
     {
-        .kp = 1.6f, .ki = 0.05f, .kd = 0.0f, .kf = 1.9f,
+        .kp = 1.8f, .ki = 0.25f, .kd = 0.0f, .kf = 1.9f,
         .i_limit = 240,
-        .output_limit = 900,
+        .output_limit = 650,
         .min_effect_pwm_fwd = 72, .min_effect_pwm_rev = 78,
         .integral_full_error = 50, .integral_half_error = 120,
         .target_step_limit = 20,
@@ -61,9 +61,9 @@ PID_Pram_t g_speed_pid[MOTOR_MAX] =
         .stall_state = {0}
     },
     {
-        .kp = 1.6f, .ki = 0.05f, .kd = 0.0f, .kf = 1.9f,
+        .kp = 1.8f, .ki = 0.25f, .kd = 0.0f, .kf = 1.9f,
         .i_limit = 240,
-        .output_limit = 870,
+        .output_limit = 650,
         .min_effect_pwm_fwd = 72, .min_effect_pwm_rev = 78,
         .integral_full_error = 50, .integral_half_error = 120,
         .target_step_limit = 20,
@@ -514,11 +514,11 @@ int32_t speed_pid_calc(MotorID motor_id,
 
     if(pwm_command > 0 && pwm_command < pid->min_effect_pwm_fwd)
     {
-        pwm_command = 0;
+        pwm_command = pid->min_effect_pwm_fwd;
     }
     else if(pwm_command < 0 && pwm_command > -pid->min_effect_pwm_rev)
     {
-        pwm_command = 0;
+        pwm_command = -pid->min_effect_pwm_rev;
     }
 
     pid->output = pwm_command;

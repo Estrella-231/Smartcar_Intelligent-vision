@@ -574,6 +574,11 @@
               <FileType>1</FileType>
               <FilePath>..\code\user_monitor\monitor.c</FilePath>
             </File>
+            <File>
+              <FileName>pulse_calibration_mode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\user_business\pulse_calibration_mode.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

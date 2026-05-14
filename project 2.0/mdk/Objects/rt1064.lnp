@@ -34,6 +34,7 @@
 ".\objects\comm_protocol.o"
 ".\objects\data_reporter.o"
 ".\objects\monitor.o"
+".\objects\pulse_calibration_mode.o"
 ".\objects\zf_common_clock.o"
 ".\objects\zf_common_debug.o"
 ".\objects\zf_common_fifo.o"

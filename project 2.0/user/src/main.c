@@ -13,6 +13,7 @@
 #include "speed_pid.h"
 #include "state_machine.h"
 #include "debug_runtime.h"
+#include "pulse_calibration_mode.h"
 
 #include "soko_map.h"
 #include "soko_motion_adapter.h"
@@ -675,6 +676,7 @@ static void bfs_process_new_valid_frame(void)
 
     if(map_changed)
     {
+        motion_display_set_map_objects(&parsed_map);
         bfs_send_text_line("BFS bridge ok cnt=%lu stable=%lu p=(%u,%u) box=%u target=%u bomb=%u\r\n",
                            (unsigned long)current_valid_count,
                            (unsigned long)g_stable_frame_count,
@@ -887,10 +889,10 @@ static void smartcar_runtime_init(void)
     memset(g_raw_map_history, 0, sizeof(g_raw_map_history));
     bfs_runtime_state_reset();
 
-    motion_exec_set_segment_accept_tolerance_mm(EXEC_SEGMENT_ACCEPT_TOL_MM);
-    odometry_set_finish_tolerance_mm(POINT_MOVE_FINISH_TOL_MM);
-
-#if SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_MANUAL_RECT_LAP
+#if SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_PULSE_CAL_3200
+    pulse_cal_3200_init();
+    bfs_send_text_line("Pulse calibration 3200mm mode\r\n");
+#elif SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_MANUAL_RECT_LAP
     motion_debug_build_inner_rect_lap_plan(&g_manual_rect_lap_plan);
     motion_exec_set_segment_accept_tolerance_mm(DEBUG_EXEC_SEGMENT_ACCEPT_TOL_MM);
     odometry_set_finish_tolerance_mm(DEBUG_POINT_MOVE_FINISH_TOL_MM);
@@ -921,12 +923,21 @@ int main(void)
 
     smartcar_runtime_init();
     interrupt_global_enable(0);
-	  monitor_init();
-
+    monitor_init();
 
     while(1)
     {
-#if SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_WHEEL_SIGN_CHECK
+#if SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_PULSE_CAL_3200
+        PulseCalStatus pulse_cal_status;
+
+        pulse_cal_3200_tick(EXEC_CONTROL_PERIOD_MS);
+        pulse_cal_3200_get_status(&pulse_cal_status);
+        g_debug_a = (int32_t)pulse_cal_status.state;
+        g_debug_b = pulse_cal_status.odom_delta_mm;
+        g_debug_c = pulse_cal_status.target_error_mm;
+        g_debug_d = pulse_cal_status.yaw_cd;
+        monitor_tick();
+#elif SMARTCAR_RUNTIME_MODE == SMARTCAR_MODE_WHEEL_SIGN_CHECK
         wheel_sign_check_tick(EXEC_CONTROL_PERIOD_MS);
 #else
 #if SMARTCAR_RUNTIME_MODE != SMARTCAR_MODE_MANUAL_RECT_LAP
@@ -935,7 +946,7 @@ int main(void)
         motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
         motion_display_tick();
         motion_exec_refresh_debug_output(EXEC_CONTROL_PERIOD_MS);
-				monitor_tick();
+        monitor_tick();
 #endif
         send_data(g_debug_a, g_debug_b, g_debug_c, g_debug_d);
         system_delay_ms(EXEC_CONTROL_PERIOD_MS);

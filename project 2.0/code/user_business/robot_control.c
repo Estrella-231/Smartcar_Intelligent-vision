@@ -1056,6 +1056,24 @@ static uint8_t motion_exec_segment_near_finish_dwelled(uint32_t control_period_m
     return (uint8_t)(g_motion_exec_near_accept_elapsed_ms >= EXEC_SEGMENT_NEAR_ACCEPT_MS);
 }
 
+static uint8_t motion_exec_should_stop_after_current_move_segment(void)
+{
+    uint16_t next_segment_index =
+        (uint16_t)(g_motion_exec_state.current_segment_index + 1U);
+
+    if(next_segment_index >= g_motion_exec_plan.count)
+    {
+        return 1U;
+    }
+
+    if(SEG_WALK != g_motion_exec_state.current_segment.type)
+    {
+        return 1U;
+    }
+
+    return (uint8_t)(SEG_WALK != g_motion_exec_plan.data[next_segment_index].type);
+}
+
 void motion_exec_init(void)
 {
     memset(&g_motion_exec_state, 0, sizeof(g_motion_exec_state));
@@ -1247,14 +1265,16 @@ void motion_exec_tick(uint32_t control_period_ms)
                     /*
                      * Keep the finish transition conservative.
                      *
-                     * We tried loading the next segment immediately in the same
-                     * control tick, but on real ground that made the chassis
-                     * advance segments too early and occasionally drift or stop
-                     * one cell before the intended target. Returning to the
-                     * simpler stop-then-next-tick transition is slower, but
-                     * much more stable for the current tuning stage.
+                     * Free WALK-to-WALK transitions keep their current wheel
+                     * command until the next scheduler tick replaces it with
+                     * the next segment command. PUSH/WAIT/ROTATE boundaries and
+                     * plan completion still use a full stop because they are
+                     * more sensitive to contact force or heading state.
                      */
-                    motion_exec_stop_chassis();
+                    if(motion_exec_should_stop_after_current_move_segment())
+                    {
+                        motion_exec_stop_chassis();
+                    }
                     motion_exec_log_line(
                         "EXEC done idx=%u %s %s%u odom=(%ld,%ld) tgt=(%ld,%ld) d=(%ld,%ld)\r\n",
                         g_motion_exec_state.current_segment_index,

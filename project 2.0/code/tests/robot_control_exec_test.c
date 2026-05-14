@@ -30,6 +30,7 @@ static int32_t g_speed_pid_error[MOTOR_MAX] = {0};
 static int32_t g_speed_pid_output[MOTOR_MAX] = {0};
 static int32_t g_speed_pid_output_limit[MOTOR_MAX] = {0};
 static int32_t g_speed_pid_reset_all_call_count = 0;
+static int32_t g_motor_stop_all_call_count = 0;
 static uint8_t g_force_speed_pid_saturation = 0U;
 
 void system_delay_ms(uint32_t ms)
@@ -134,6 +135,8 @@ int32_t Mecanum_mmps_to_pulse_per_period(int32_t velocity_mmps, uint32_t period_
 
 void motor_stop_all(void)
 {
+    g_motor_stop_all_call_count++;
+
     for(int i = 0; i < MOTOR_MAX; i++)
     {
         g_last_motor_pwm[i] = 0;
@@ -453,6 +456,7 @@ static void reset_test_state(void)
     g_test_point_vy_cmd_mmps = 0;
     g_last_finish_tolerance_mm = 0;
     g_speed_pid_reset_all_call_count = 0;
+    g_motor_stop_all_call_count = 0;
     g_force_speed_pid_saturation = 0U;
 }
 
@@ -602,6 +606,40 @@ static void test_completed_segment_snaps_odometry_to_grid_target(void)
     assert(g_odometry_target_x_mm - g_odometry_x_mm == -FIELD_GRID_CELL_MM);
 }
 
+static void test_consecutive_move_segments_do_not_full_stop_between_segments(void)
+{
+    motion_exec_runtime_state_t runtime_state;
+    MotionPlan manual_plan;
+    int32_t stop_count_after_init;
+
+    reset_test_state();
+    memset(&manual_plan, 0, sizeof(manual_plan));
+    manual_plan.count = 2U;
+    manual_plan.data[0].type = SEG_WALK;
+    manual_plan.data[0].dir = DIR_RIGHT;
+    manual_plan.data[0].cells = 1U;
+    manual_plan.data[1].type = SEG_WALK;
+    manual_plan.data[1].dir = DIR_UP;
+    manual_plan.data[1].cells = 1U;
+
+    motion_exec_init();
+    stop_count_after_init = g_motor_stop_all_call_count;
+    motion_exec_load_manual_plan(&manual_plan, ODOM_START_GRID_X, ODOM_START_GRID_Y);
+    motion_exec_request_start();
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    g_odometry_x_mm = g_odometry_target_x_mm - DEBUG_EXEC_SEGMENT_ACCEPT_TOL_MM;
+    g_odometry_y_mm = g_odometry_target_y_mm;
+    g_odometry_move_state = MOVE_STATE_RUNNING;
+    motion_exec_tick(EXEC_CONTROL_PERIOD_MS);
+
+    assert(motion_exec_runtime_state_copy(&runtime_state));
+    assert(runtime_state.current_segment_index == 1U);
+    assert(runtime_state.phase == CAR_STATE_EXEC_SEGMENT);
+    assert(g_motor_stop_all_call_count == stop_count_after_init);
+    assert(g_speed_pid_reset_all_call_count == 1);
+}
+
 static void test_near_target_dwell_accepts_sticky_segment(void)
 {
     motion_exec_runtime_state_t runtime_state;
@@ -737,6 +775,7 @@ int main(void)
     test_manual_plan_load_bypasses_bfs_wait_states();
     test_manual_debug_mode_does_not_accept_segment_at_default_tolerance();
     test_completed_segment_snaps_odometry_to_grid_target();
+    test_consecutive_move_segments_do_not_full_stop_between_segments();
     test_near_target_dwell_accepts_sticky_segment();
     test_sustained_saturation_scales_body_command_next_cycle();
     test_command_scale_keeps_translation_above_effective_motion_threshold();

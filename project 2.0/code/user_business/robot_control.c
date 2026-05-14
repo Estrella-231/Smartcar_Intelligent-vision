@@ -86,8 +86,6 @@ static int32_t g_motion_exec_target_yaw_cd = EXEC_YAW_TARGET_CD;
 static uint8_t g_motion_exec_rotate_stable_count = 0U;
 static int32_t g_motion_exec_segment_accept_tol_mm = EXEC_SEGMENT_ACCEPT_TOL_MM;
 static uint32_t g_motion_exec_near_accept_elapsed_ms = 0U;
-static uint32_t g_motion_exec_sticky_accept_elapsed_ms = 0U;
-static int32_t g_motion_exec_last_error_norm_mm = 0;
 static int32_t g_motion_exec_command_scale_pct = 100;
 static uint8_t g_motion_exec_bad_track_count = 0U;
 static uint8_t g_motion_exec_healthy_track_count = 0U;
@@ -885,8 +883,6 @@ static uint8_t motion_exec_load_plan_common(const MotionPlan *plan,
     g_motion_exec_target_yaw_cd = EXEC_YAW_TARGET_CD;
     g_motion_exec_rotate_stable_count = 0U;
     g_motion_exec_near_accept_elapsed_ms = 0U;
-    g_motion_exec_sticky_accept_elapsed_ms = 0U;
-    g_motion_exec_last_error_norm_mm = 0;
     g_motion_exec_state.source_plan_signature = source_plan_signature;
     g_motion_exec_state.current_segment_index = 0U;
     g_motion_exec_state.current_grid_x = start_grid_x;
@@ -933,8 +929,6 @@ static void motion_exec_start_next_segment(void)
     g_motion_exec_state.current_segment = *segment;
     g_motion_exec_state.segment_wait_remaining_ms = 0;
     g_motion_exec_near_accept_elapsed_ms = 0U;
-    g_motion_exec_sticky_accept_elapsed_ms = 0U;
-    g_motion_exec_last_error_norm_mm = 0;
 
     switch(segment->type)
     {
@@ -1062,39 +1056,6 @@ static uint8_t motion_exec_segment_near_finish_dwelled(uint32_t control_period_m
     return (uint8_t)(g_motion_exec_near_accept_elapsed_ms >= EXEC_SEGMENT_NEAR_ACCEPT_MS);
 }
 
-static uint8_t motion_exec_segment_sticky_finish_dwelled(uint32_t control_period_ms)
-{
-    int32_t dx_abs = abs(odometry_get_target_dx_mm());
-    int32_t dy_abs = abs(odometry_get_target_dy_mm());
-    int32_t error_norm_mm = (dx_abs > dy_abs) ? dx_abs : dy_abs;
-
-    if(error_norm_mm <= EXEC_SEGMENT_STICKY_ACCEPT_TOL_MM)
-    {
-        int32_t improvement_mm = g_motion_exec_last_error_norm_mm - error_norm_mm;
-
-        if((g_motion_exec_last_error_norm_mm > 0) &&
-           (improvement_mm < EXEC_SEGMENT_STICKY_PROGRESS_MM))
-        {
-            if(g_motion_exec_sticky_accept_elapsed_ms < EXEC_SEGMENT_STICKY_ACCEPT_MS)
-            {
-                g_motion_exec_sticky_accept_elapsed_ms += control_period_ms;
-            }
-        }
-        else
-        {
-            g_motion_exec_sticky_accept_elapsed_ms = 0U;
-        }
-    }
-    else
-    {
-        g_motion_exec_sticky_accept_elapsed_ms = 0U;
-    }
-
-    g_motion_exec_last_error_norm_mm = error_norm_mm;
-
-    return (uint8_t)(g_motion_exec_sticky_accept_elapsed_ms >= EXEC_SEGMENT_STICKY_ACCEPT_MS);
-}
-
 static uint8_t motion_exec_should_stop_after_current_move_segment(void)
 {
     uint16_t next_segment_index =
@@ -1130,8 +1091,6 @@ void motion_exec_init(void)
     g_motion_exec_target_yaw_cd = EXEC_YAW_TARGET_CD;
     g_motion_exec_rotate_stable_count = 0U;
     g_motion_exec_near_accept_elapsed_ms = 0U;
-    g_motion_exec_sticky_accept_elapsed_ms = 0U;
-    g_motion_exec_last_error_norm_mm = 0;
     motion_exec_reset_command_scale();
 
     odometry_init(ODOM_START_X_MM, ODOM_START_Y_MM);
@@ -1301,7 +1260,6 @@ void motion_exec_tick(uint32_t control_period_ms)
             {
                 if(motion_exec_segment_soft_finish_reached() ||
                    motion_exec_segment_near_finish_dwelled(control_period_ms) ||
-                   motion_exec_segment_sticky_finish_dwelled(control_period_ms) ||
                    (odometry_update_point_move_command(&vx_cmd_mmps, &vy_cmd_mmps) == MOVE_STATE_FINISH))
                 {
                     /*

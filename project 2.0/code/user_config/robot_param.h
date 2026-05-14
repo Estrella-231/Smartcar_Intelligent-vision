@@ -30,7 +30,7 @@
 //
 // Current value is provisional. Recalibrate it on the real chassis:
 // PULSE_PER_MM = average_encoder_pulses / measured_travel_mm.
-#define PULSE_PER_MM             (9.407f)
+#define PULSE_PER_MM             (10.3f)
 
 // Raw int16 encoder-count boundaries for one hardware read. These are not the
 // encoder resolution and should not be used to wrap software-accumulated pos_now.
@@ -134,12 +134,6 @@
 #define EXEC_SEGMENT_NEAR_ACCEPT_TOL_MM       (45)
 #define EXEC_SEGMENT_NEAR_ACCEPT_MS           (500)
 
-// If the chassis is close to the target but odometry error stops improving,
-// accept the segment to avoid waiting forever in the low-speed sticky region.
-#define EXEC_SEGMENT_STICKY_ACCEPT_TOL_MM     (80)
-#define EXEC_SEGMENT_STICKY_ACCEPT_MS         (700)
-#define EXEC_SEGMENT_STICKY_PROGRESS_MM       (5)
-
 /************************ Round-2 odometry ************************/
 // Scale factors used after field calibration. Leave at 1.0 until measured.
 #define ODOM_SCALE_X                     (0.940f)
@@ -201,8 +195,8 @@
 // When PWM output exceeds threshold while encoder speed remains below threshold
 // for a confirmation time, the motor is stopped and integral is cleared.
 #define STALL_PROTECTION_ENABLE           (1)
-#define STALL_PWM_THRESHOLD_PCT          (50)    // PWM saturation threshold (50%)
-#define STALL_SPEED_THRESHOLD_PULSE      (15)    // Speed threshold (pulses/period)
+#define STALL_PWM_THRESHOLD_PCT          (85)    // PWM saturation threshold (85%)
+#define STALL_SPEED_THRESHOLD_PULSE      (5)     // Speed threshold (pulses/period)
 #define STALL_CONFIRM_TIME_MS            (500)   // Stall confirmation time
 #define STALL_RECOVERY_DELAY_MS          (2000)  // Recovery delay time
 #define STALL_STOP_ALL_MOTORS            (1)     // Stop all motors on stall
